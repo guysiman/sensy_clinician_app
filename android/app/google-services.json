@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "640267146973",
+    "project_id": "sensyapp-ab595",
+    "storage_bucket": "sensyapp-ab595.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:640267146973:android:2c30e15b9149a87269ad34",
+        "android_client_info": {
+          "package_name": "com.example.sensy_clinician_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2BtAJpC3OZ3t4hp53Spbp59mImiBC1-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:640267146973:android:82b093e18b889cc169ad34",
+        "android_client_info": {
+          "package_name": "com.example.sensy_patient_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2BtAJpC3OZ3t4hp53Spbp59mImiBC1-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

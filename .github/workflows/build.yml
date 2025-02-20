@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  flutter_job:
+    runs-on: macos-latest
+
+    steps:
+
+      # Clones the project on the machine
+      - uses: actions/checkout@v4
+
+      # Installs flutter and related dependency on this machine
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      
+      # Fetches proj dependencies from pub
+      - name: Install dependencies
+        run: flutter pub get
+      
+      # Verifies if the dart code is formatted well
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+      
+      # Checks for Symantic errors. Can be configured using analysis_options.yaml
+      - name: Analyze project source
+        run: flutter analyze
+
+      # Runs unit test
+      - name: Run tests
+        run: flutter test
