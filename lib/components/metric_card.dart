@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class MetricCard extends StatelessWidget {
   final String title;
   final String value;
-  final String? subtitle;
+  final String? prevValue;
   final double? percentageChange;
   final IconData icon;
   final Color iconColor;
@@ -12,7 +12,7 @@ class MetricCard extends StatelessWidget {
     Key? key,
     required this.title,
     required this.value,
-    this.subtitle,
+    this.prevValue,
     this.percentageChange,
     required this.icon,
     required this.iconColor,
@@ -21,11 +21,12 @@ class MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Color(0xFFF7F9F8),
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: Color(0xFFD8E0DE)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -39,38 +40,31 @@ class MetricCard extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: iconColor,
-                  size: 16,
+                  color: Color(0xFFDD9178),
+                  size: 18,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 11,
-                      fontWeight: FontWeight.normal,
-                    ),
+                    style: Theme.of(context).textTheme.labelSmall,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            
-            SizedBox(height: 10),
-            
+
+            SizedBox(height: 12),
+
             // Value
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            
-            SizedBox(height: 4),
-            
+
+            SizedBox(height: 8),
+
             // Percentage and subtitle
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -86,7 +80,14 @@ class MetricCard extends StatelessWidget {
                       color: percentageChange! >= 0
                           ? Colors.green.shade100
                           : Colors.red.shade100,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        // Adding a colored border
+                        color: percentageChange! >= 0
+                            ? Colors.green.shade700
+                            : Colors.red.shade700,
+                        width: 1, // Adjust thickness as needed
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -98,33 +99,30 @@ class MetricCard extends StatelessWidget {
                           color: percentageChange! >= 0
                               ? Colors.green.shade700
                               : Colors.red.shade700,
-                          size: 10,
+                          size: 12,
                         ),
                         const SizedBox(width: 2),
                         Text(
                           '${percentageChange!.abs().toStringAsFixed(2)}%',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: percentageChange! >= 0
                                 ? Colors.green.shade700
                                 : Colors.red.shade700,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                       ],
                     ),
                   ),
-                if (subtitle != null)
+                if (prevValue != null)
                   Padding(
                     padding: EdgeInsets.only(
-                      left: percentageChange != null ? 6.0 : 0.0,
+                      left: percentageChange != null ? 8.0 : 0.0,
                     ),
                     child: Text(
-                      subtitle!,
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
+                      prevValue!,
+                      style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ),
               ],

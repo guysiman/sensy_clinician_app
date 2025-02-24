@@ -57,9 +57,7 @@ class _HomePageState extends State<HomePage> {
                   'Dashboard',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: _selectedIndex == 0
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -73,9 +71,7 @@ class _HomePageState extends State<HomePage> {
                   'Patients',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: _selectedIndex == 1
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -83,15 +79,6 @@ class _HomePageState extends State<HomePage> {
           ),
           Expanded(
             child: _pages[_selectedIndex],
-          ),
-          Container(
-            alignment: Alignment.bottomRight,
-            child: ElevatedButton(
-              child: const Text("Logout"),
-              onPressed: () {
-                signOut();
-              },
-            ),
           ),
         ],
       ),
