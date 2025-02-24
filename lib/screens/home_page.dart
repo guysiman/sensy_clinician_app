@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dashboard_page.dart';
+import 'patient_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,28 +10,67 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _pages = [
+    DashboardScreen(),
+    PatientsScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Center(
-                child: Text('Home Page',
-                    style: Theme.of(context).textTheme.titleMedium)),
-            Container(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                child: const Text("Logout"),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/signinpage');
-                },
-              ),
+      body: Row(
+        children: [
+          NavigationRail(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: _onItemTapped,
+              labelType: NavigationRailLabelType.all,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              indicatorColor: Color(0xFF61838D),
+              
+              destinations: [
+                NavigationRailDestination(
+                  icon: Icon(
+                    _selectedIndex == 0 ? Icons.dashboard : Icons.dashboard_outlined,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                  label: 
+                  Text(
+                    'Dashboard',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: _selectedIndex == 0 ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(
+                    _selectedIndex == 1 ? Icons.people : Icons.people_outlined,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                  label: Text(
+                    'Patients',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: _selectedIndex == 1 ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          Expanded(
+            child: _pages[_selectedIndex],
+          ),
+        ],
       ),
     );
   }
