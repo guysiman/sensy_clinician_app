@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 
 import 'screens/home_page.dart';
 import 'screens/sign_in_page.dart';
+import 'widget_tree.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,7 +88,7 @@ class MyApp extends StatelessWidget {
               )),
           useMaterial3: true,
         ),
-        home: const SignInPage(),
+        home: const WidgetTree(),
         routes: {
           '/signinpage': (context) => SignInPage(),
           '/homepage': (context) => HomePage(),
