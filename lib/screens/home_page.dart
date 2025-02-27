@@ -36,49 +36,63 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Column(
         children: [
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: _onItemTapped,
-            labelType: NavigationRailLabelType.all,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            indicatorColor: Color(0xFF61838D),
-            destinations: [
-              NavigationRailDestination(
-                icon: Icon(
-                  _selectedIndex == 0
-                      ? Icons.dashboard
-                      : Icons.dashboard_outlined,
-                  color: Colors.white,
-                  size: 40,
-                ),
-                label: Text(
-                  'Dashboard',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ),
-              NavigationRailDestination(
-                icon: Icon(
-                  _selectedIndex == 1 ? Icons.people : Icons.people_outlined,
-                  color: Colors.white,
-                  size: 40,
-                ),
-                label: Text(
-                  'Patients',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ),
-            ],
+          // Thin bar at the very top
+          Container(
+            height: 25,
+            color: const Color(0xFFC4D1D4),
           ),
+          // Main content area with NavigationRail and page content
           Expanded(
-            child: _pages[_selectedIndex],
+            child: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onItemTapped,
+                  labelType: NavigationRailLabelType.all,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  indicatorColor: const Color(0xFF61838D),
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: Icon(
+                        _selectedIndex == 0
+                            ? Icons.dashboard
+                            : Icons.dashboard_outlined,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      label: const Text(
+                        'Dashboard',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(
+                        _selectedIndex == 1
+                            ? Icons.people
+                            : Icons.people_outlined,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      label: const Text(
+                        'Patients',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: _pages[_selectedIndex],
+                ),
+              ],
+            ),
           ),
         ],
       ),
