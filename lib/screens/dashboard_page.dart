@@ -35,7 +35,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   // Row of metric cards with horizontal scroll
                   SizedBox(
-                    height: 150,
+                    height: 160,
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
