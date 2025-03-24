@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/add_patient_dialog.dart';
 import '../components/pair_ipg_dialog.dart';
 
 class PatientsScreen extends StatelessWidget {
@@ -36,27 +37,31 @@ class PatientsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
-                contentPadding: EdgeInsets.symmetric(vertical: 8), // Align height with button
+                contentPadding: EdgeInsets.symmetric(
+                    vertical: 8), // Align height with button
               ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: ElevatedButton.icon(
-              icon: Icon(Icons.add, color: Colors.white, size: 18), // Smaller icon
+              icon: Icon(Icons.add,
+                  color: Colors.white, size: 18), // Smaller icon
               label: Text(
                 'Add New Patient',
-                style: TextStyle(color: Colors.white, fontSize: 14), // Smaller font
+                style: TextStyle(
+                    color: Colors.white, fontSize: 14), // Smaller font
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF2C5364),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Align height with search
+                padding: EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12), // Align height with search
               ),
               onPressed: () {
-                // Add new patient functionality
+                showAddPatientDialog(context);
               },
             ),
           ),
@@ -152,7 +157,8 @@ class PatientGridView extends StatelessWidget {
           padding: EdgeInsets.all(16),
           child: GridView.builder(
             shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(), // Disable grid scrolling, use SingleChildScrollView instead
+            physics:
+                NeverScrollableScrollPhysics(), // Disable grid scrolling, use SingleChildScrollView instead
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               childAspectRatio: 2.5,
@@ -238,7 +244,7 @@ class PatientCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildPatientInfoRow(String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

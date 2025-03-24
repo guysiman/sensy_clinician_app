@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../services/auth.dart';
 
+import 'bluetooth_page.dart';
 import 'dashboard_page.dart';
 import 'patient_page.dart';
 
@@ -14,6 +16,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  FlutterBluePlus flutterBlue = FlutterBluePlus();
+
   final User? user = Auth().currentUser!;
 
   Future<void> signOut() async {
@@ -25,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     DashboardScreen(),
     PatientsScreen(),
+    BluetoothPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -80,6 +85,20 @@ class _HomePageState extends State<HomePage> {
                       ),
                       label: const Text(
                         'Patients',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(
+                        Icons.bluetooth,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      label: const Text(
+                        'IPG',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.normal,
