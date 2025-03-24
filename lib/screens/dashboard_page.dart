@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import '../components/metric_card.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
+
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,7 +119,7 @@ class DashboardScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: Text('Patient data table would go here'),
+                      child: Text('Patient data goes here'),
                     ),
                   ),
                 ],

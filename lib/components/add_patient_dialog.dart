@@ -70,6 +70,8 @@ class _AddPatientDialogState extends State<_AddPatientDialog> {
   }
 
   Future<void> createUser() async {
+    String clinicianID = await Auth().getClincianID();
+
     try {
       await Auth().createUserWithEmailAndPassword(
           email: emailController.text, password: passwordController.text);
@@ -81,12 +83,12 @@ class _AddPatientDialogState extends State<_AddPatientDialog> {
     }
     await FirebaseFirestore.instance
         .collection('clinicians')
-        .doc('C123456')
+        .doc(clinicianID)
         .collection('patients')
         .doc(idController.text)
         .set({
       "patientId": idController.text,
-      "clinicianId": 'C123456',
+      "clinicianId": clinicianID,
       "email": emailController.text,
       "age": int.tryParse(ageController.text) ?? 0,
       "height": int.tryParse(heightController.text) ?? 0,

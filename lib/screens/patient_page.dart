@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import '../components/add_patient_dialog.dart';
 import '../components/pair_ipg_dialog.dart';
 
-class PatientsScreen extends StatelessWidget {
+class PatientsScreen extends StatefulWidget {
+  const PatientsScreen({super.key});
+
+  @override
+  _PatientScreenState createState() => _PatientScreenState();
+}
+
+class _PatientScreenState extends State<PatientsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
