@@ -59,7 +59,8 @@ class PairIPGDialog extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(24, 0, 24, 36), // Increased bottom padding
+              padding: EdgeInsets.fromLTRB(
+                  24, 0, 24, 36), // Increased bottom padding
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -89,12 +90,7 @@ class PairIPGDialog extends StatelessWidget {
                     height: 44,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Initiating IPG pairing process for patient $patientId'),
-                          ),
-                        );
+                        Navigator.of(context).pop(true);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF2C5364),

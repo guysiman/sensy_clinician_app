@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth.dart';
 
-void showAddPatientDialog(BuildContext context) {
-  showDialog(
+Future<bool> showAddPatientDialog(BuildContext context) async {
+  return await showDialog(
     context: context,
     builder: (context) {
       return _AddPatientDialog();
@@ -73,8 +74,13 @@ class _AddPatientDialogState extends State<_AddPatientDialog> {
     String clinicianID = await Auth().getClincianID();
 
     try {
-      await Auth().createUserWithEmailAndPassword(
-          email: emailController.text, password: passwordController.text);
+      FirebaseApp app = await Firebase.initializeApp(
+          name: 'Secondary', options: Firebase.app().options);
+      try {
+        await FirebaseAuth.instanceFor(app: app).createUserWithEmailAndPassword(
+            email: emailController.text, password: passwordController.text);
+      } on FirebaseAuthException catch (e) {}
+      await app.delete();
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = 'Something went wrong';
@@ -117,84 +123,87 @@ class _AddPatientDialogState extends State<_AddPatientDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        width: 695,
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Create a Patient',
-                style: Theme.of(context).textTheme.titleMedium),
-            SizedBox(height: 24),
-            Row(children: [
-              _buildTextField(
-                  context, idController, "Patient Clinical Study ID#"),
-              SizedBox(width: 10),
-              _buildTextField(context, emailController, "Email"),
-            ]),
-            SizedBox(height: 20),
-            Row(children: [
-              _buildTextField(context, passwordController, "New password",
-                  isPassword: true),
-              SizedBox(width: 10),
-              _buildTextField(context, ageController, "Age", isNumber: true),
-            ]),
-            SizedBox(height: 20),
-            Row(children: [
-              _buildTextField(context, indicationController, "Indication"),
-              SizedBox(width: 10),
-              _buildTextField(context, originController, "Origin of pain"),
-            ]),
-            SizedBox(height: 20),
-            Row(children: [
-              _buildTextField(context, heightController, "Height (cm)",
-                  isNumber: true),
-              SizedBox(width: 10),
-              _buildTextField(context, weightController, "Weight (kg)",
-                  isNumber: true),
-            ]),
-            SizedBox(height: 60),
-            if (errorMessage != '') Text('$errorMessage'),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: Color(0xFF557A8D),
-                      fontSize: 14,
+    return SingleChildScrollView(
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          width: 695,
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Create a Patient',
+                  style: Theme.of(context).textTheme.titleMedium),
+              SizedBox(height: 24),
+              Row(children: [
+                _buildTextField(
+                    context, idController, "Patient Clinical Study ID#"),
+                SizedBox(width: 10),
+                _buildTextField(context, emailController, "Email"),
+              ]),
+              SizedBox(height: 20),
+              Row(children: [
+                _buildTextField(context, passwordController, "New password",
+                    isPassword: true),
+                SizedBox(width: 10),
+                _buildTextField(context, ageController, "Age", isNumber: true),
+              ]),
+              SizedBox(height: 20),
+              Row(children: [
+                _buildTextField(context, indicationController, "Indication"),
+                SizedBox(width: 10),
+                _buildTextField(context, originController, "Origin of pain"),
+              ]),
+              SizedBox(height: 20),
+              Row(children: [
+                _buildTextField(context, heightController, "Height (cm)",
+                    isNumber: true),
+                SizedBox(width: 10),
+                _buildTextField(context, weightController, "Weight (kg)",
+                    isNumber: true),
+              ]),
+              SizedBox(height: 60),
+              if (errorMessage != '') Text('$errorMessage'),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Color(0xFF557A8D),
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Color(0xFFCCDAE1)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Color(0xFFCCDAE1)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      textStyle:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
+                    onPressed: _isButtonEnabled
+                        ? () {
+                            _onCreatePatient();
+                            Navigator.pop(context, true);
+                          }
+                        : null,
+                    child: Text("Create a patient"),
                   ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    textStyle:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: _isButtonEnabled
-                      ? () {
-                          _onCreatePatient();
-                          Navigator.of(context).pop();
-                        }
-                      : null,
-                  child: Text("Create a patient"),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

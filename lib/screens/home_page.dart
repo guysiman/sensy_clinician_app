@@ -8,8 +8,10 @@ import 'bluetooth_page.dart';
 import 'dashboard_page.dart';
 import 'patient_page.dart';
 
+final GlobalKey<_HomePageState> homePageKey = GlobalKey<_HomePageState>();
+
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -35,6 +37,13 @@ class _HomePageState extends State<HomePage> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void navigateToIPG() {
+    print('i am here');
+    setState(() {
+      _selectedIndex = 2; // Set to IPG page
     });
   }
 
