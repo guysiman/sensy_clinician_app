@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sensy_clinician_app/screens/home_page.dart';
 import 'package:sensy_clinician_app/services/database.dart';
 import '../components/add_patient_dialog.dart';
 import '../components/pair_ipg_dialog.dart';
@@ -12,6 +13,40 @@ class PatientsScreen extends StatefulWidget {
 }
 
 class _PatientScreenState extends State<PatientsScreen> {
+  final DatabaseService dbService = DatabaseService();
+  String? clinicianID;
+  List<Map<String, dynamic>> patients = [];
+  bool isLoading = true;
+  bool hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchClinicianAndPatients();
+  }
+
+  Future<void> fetchClinicianAndPatients() async {
+    try {
+      // Simulate fetching clinicianID (replace this with actual logic)
+      String fetchedClinicianID = await Auth().getClincianID();
+
+      // Fetch patients once clinicianID is available
+      List<Map<String, dynamic>> fetchedPatients =
+          await dbService.getPatientsByClincianID(fetchedClinicianID);
+
+      setState(() {
+        clinicianID = fetchedClinicianID;
+        patients = fetchedPatients;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        hasError = true;
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,96 +104,49 @@ class _PatientScreenState extends State<PatientsScreen> {
                 padding: EdgeInsets.symmetric(
                     horizontal: 16, vertical: 12), // Align height with search
               ),
-              onPressed: () {
-                showAddPatientDialog(context);
+              onPressed: () async {
+                bool shouldUpdate = await showAddPatientDialog(context);
+                if (shouldUpdate) {
+                  setState(() {
+                    fetchClinicianAndPatients(); // Refetch data to reflect the changes
+                  });
+                }
               },
             ),
           ),
         ],
       ),
-      body: PatientsGridView(),
-    );
-  }
-}
-
-class PatientsGridView extends StatefulWidget {
-  const PatientsGridView({super.key});
-
-  @override
-  _PatientsGridViewState createState() => _PatientsGridViewState();
-}
-
-class _PatientsGridViewState extends State<PatientsGridView> {
-  final DatabaseService dbService = DatabaseService();
-  String? clinicianID;
-  List<Map<String, dynamic>> patients = [];
-  bool isLoading = true;
-  bool hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchClinicianAndPatients();
-  }
-
-  Future<void> fetchClinicianAndPatients() async {
-    try {
-      // Simulate fetching clinicianID (replace this with actual logic)
-      String fetchedClinicianID = await Auth().getClincianID();
-      print(fetchedClinicianID);
-
-      // Fetch patients once clinicianID is available
-      List<Map<String, dynamic>> fetchedPatients =
-          await dbService.getPatientsByClincianID(fetchedClinicianID);
-
-      print(fetchedPatients.length);
-
-      setState(() {
-        clinicianID = fetchedClinicianID;
-        patients = fetchedPatients;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        hasError = true;
-        isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Sample patient data based on the screenshot
-    return isLoading
-        ? Center(child: CircularProgressIndicator())
-        : Scrollable(
-            viewportBuilder: (context, _) {
-              return SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics:
-                      NeverScrollableScrollPhysics(), // Disable grid scrolling, use SingleChildScrollView instead
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 2.5,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Scrollable(
+              viewportBuilder: (context, _) {
+                return SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics:
+                        NeverScrollableScrollPhysics(), // Disable grid scrolling, use SingleChildScrollView instead
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 2.5,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    itemCount: patients.length,
+                    itemBuilder: (context, index) {
+                      final patient = patients[index];
+                      return PatientCard(
+                        patientId: patient['patientID'] as String,
+                        age: patient['age'] as int,
+                        painOrigin: patient['originOfPain'] as String,
+                        hasIPG: false,
+                      );
+                    },
                   ),
-                  itemCount: patients.length,
-                  itemBuilder: (context, index) {
-                    final patient = patients[index];
-                    return PatientCard(
-                      patientId: patient['patientID'] as String,
-                      age: patient['age'] as int,
-                      painOrigin: patient['originOfPain'] as String,
-                      hasIPG: false,
-                    );
-                  },
-                ),
-              );
-            },
-          );
+                );
+              },
+            ),
+    );
   }
 }
 
@@ -186,10 +174,10 @@ class PatientCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: () {
+        onTap: () async {
           // If the patient doesn't have an IPG, show the pairing popup
           if (!hasIPG) {
-            showDialog(
+            bool? shouldNavigateToIPG = await showDialog(
               context: context,
               barrierDismissible: false,
               builder: (context) => PairIPGDialog(
@@ -198,6 +186,11 @@ class PatientCard extends StatelessWidget {
                 painOrigin: painOrigin,
               ),
             );
+            if (shouldNavigateToIPG == true) {
+              print('here');
+              // Navigate back and change the tab
+              homePageKey.currentState?.navigateToIPG();
+            }
           } else {
             // Navigate to patient details page
             // For testing purposes:

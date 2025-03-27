@@ -95,7 +95,7 @@ class MyApp extends StatelessWidget {
         home: const WidgetTree(),
         routes: {
           '/signinpage': (context) => SignInPage(),
-          '/homepage': (context) => HomePage(),
+          '/homepage': (context) => HomePage(key: homePageKey),
         });
   }
 }
