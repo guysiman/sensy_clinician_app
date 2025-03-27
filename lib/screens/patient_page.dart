@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sensy_clinician_app/services/database.dart';
 import '../components/add_patient_dialog.dart';
 import '../components/pair_ipg_dialog.dart';
+import '../services/auth.dart';
 
 class PatientsScreen extends StatefulWidget {
   const PatientsScreen({super.key});
@@ -74,118 +76,89 @@ class _PatientScreenState extends State<PatientsScreen> {
           ),
         ],
       ),
-      body: PatientGridView(),
+      body: PatientsGridView(),
     );
   }
 }
 
-class PatientGridView extends StatelessWidget {
+class PatientsGridView extends StatefulWidget {
+  const PatientsGridView({super.key});
+
+  @override
+  _PatientsGridViewState createState() => _PatientsGridViewState();
+}
+
+class _PatientsGridViewState extends State<PatientsGridView> {
+  final DatabaseService dbService = DatabaseService();
+  String? clinicianID;
+  List<Map<String, dynamic>> patients = [];
+  bool isLoading = true;
+  bool hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchClinicianAndPatients();
+  }
+
+  Future<void> fetchClinicianAndPatients() async {
+    try {
+      // Simulate fetching clinicianID (replace this with actual logic)
+      String fetchedClinicianID = await Auth().getClincianID();
+      print(fetchedClinicianID);
+
+      // Fetch patients once clinicianID is available
+      List<Map<String, dynamic>> fetchedPatients =
+          await dbService.getPatientsByClincianID(fetchedClinicianID);
+
+      print(fetchedPatients.length);
+
+      setState(() {
+        clinicianID = fetchedClinicianID;
+        patients = fetchedPatients;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        hasError = true;
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Sample patient data based on the screenshot
-    final patients = [
-      {
-        'id': '5442',
-        'age': 45,
-        'pain': '',
-        'hasIPG': true,
-      },
-      {
-        'id': '4279',
-        'age': 38,
-        'pain': 'Right foot',
-        'hasIPG': false,
-      },
-      {
-        'id': '3498',
-        'age': 32,
-        'pain': 'Right calf',
-        'hasIPG': true,
-      },
-      {
-        'id': '2865',
-        'age': 78,
-        'pain': 'Right foot',
-        'hasIPG': false,
-      },
-      {
-        'id': '9087',
-        'age': 65,
-        'pain': 'Right foot, right calf',
-        'hasIPG': true,
-      },
-      {
-        'id': '0031',
-        'age': 42,
-        'pain': 'Left calf, left foot',
-        'hasIPG': false,
-      },
-      {
-        'id': '1276',
-        'age': 31,
-        'pain': 'Left foot',
-        'hasIPG': true,
-      },
-      {
-        'id': '3465',
-        'age': 28,
-        'pain': 'Left calf',
-        'hasIPG': false,
-      },
-      {
-        'id': '8765',
-        'age': 54,
-        'pain': 'Left foot',
-        'hasIPG': true,
-      },
-      {
-        'id': '0923',
-        'age': 43,
-        'pain': 'Right foot, right calf',
-        'hasIPG': false,
-      },
-      {
-        'id': '4367',
-        'age': 86,
-        'pain': 'Right foot',
-        'hasIPG': false,
-      },
-      {
-        'id': '3267',
-        'age': 43,
-        'pain': 'Right calf',
-        'hasIPG': true,
-      },
-    ];
-
-    return Scrollable(
-      viewportBuilder: (context, _) {
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics:
-                NeverScrollableScrollPhysics(), // Disable grid scrolling, use SingleChildScrollView instead
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 2.5,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: patients.length,
-            itemBuilder: (context, index) {
-              final patient = patients[index];
-              return PatientCard(
-                patientId: patient['id'] as String,
-                age: patient['age'] as int,
-                painOrigin: patient['pain'] as String,
-                hasIPG: patient['hasIPG'] as bool,
+    return isLoading
+        ? Center(child: CircularProgressIndicator())
+        : Scrollable(
+            viewportBuilder: (context, _) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics:
+                      NeverScrollableScrollPhysics(), // Disable grid scrolling, use SingleChildScrollView instead
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: patients.length,
+                  itemBuilder: (context, index) {
+                    final patient = patients[index];
+                    return PatientCard(
+                      patientId: patient['patientID'] as String,
+                      age: patient['age'] as int,
+                      painOrigin: patient['originOfPain'] as String,
+                      hasIPG: false,
+                    );
+                  },
+                ),
               );
             },
-          ),
-        );
-      },
-    );
+          );
   }
 }
 
