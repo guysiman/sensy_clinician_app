@@ -40,11 +40,11 @@ class Auth {
       // Now we know the user and email are not null, so we can safely call the method
       String? clinicianID =
           await DatabaseService().getClinicianIDByEmail(u.email!);
-
       // Return the clinicianID if it's not null, otherwise return an empty string
       return clinicianID ?? '';
     } else {
       // Return an empty string or some default value if the user or email is null
+      print('hello');
       return '';
     }
   }
