@@ -17,7 +17,7 @@ class _WidgetTreeState extends State<WidgetTree> {
         stream: Auth().authStateChanges,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return HomePage(key: homePageKey);
+            return HomePage();
           } else {
             return const SignInPage();
           }

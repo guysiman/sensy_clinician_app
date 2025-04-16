@@ -3,7 +3,6 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/bluetooth_provider.dart';
-import 'mapping_screen.dart';
 
 /*
 TO DO
@@ -80,22 +79,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
 
       // 🔍 Discover GATT Services
       _discoverServices(device);
-      
-      // If this is an IPG device, navigate to the mapping screen
-      if (deviceType.toLowerCase() == 'ipg') {
-        // Navigate to the mapping screen with mock data
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MappingScreen(
-              patientId: '8493',
-              ipgSerial: '83cne482j',
-              ipgFirmware: '2.0',
-              ipgBattery: 89,
-            ),
-          ),
-        );
-      }
     } catch (e) {
       print(" Connection failed: $e");
     }

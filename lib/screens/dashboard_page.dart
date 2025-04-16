@@ -1,19 +1,7 @@
 import 'package:flutter/material.dart';
 import '../components/metric_card.dart';
-import '../services/auth.dart';
 
-class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
-
-  @override
-  _DashboardPageState createState() => _DashboardPageState();
-}
-
-class _DashboardPageState extends State<DashboardPage> {
-  Future<void> signOut() async {
-    await Auth().signOut();
-  }
-
+class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -124,17 +112,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: Text('Patient data goes here'),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Container(
-                    alignment: Alignment.bottomRight,
-                    child: ElevatedButton(
-                      child: const Text("Logout"),
-                      onPressed: () {
-                        signOut();
-                      },
+                      child: Text('Patient data table would go here'),
                     ),
                   ),
                 ],
