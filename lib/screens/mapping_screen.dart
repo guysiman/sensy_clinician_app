@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import '../components/add_sensation_dialog.dart';
 import '../services/database.dart';
 
-
 class MappingScreen extends StatefulWidget {
   final String patientId;
   final String ipgSerial;
@@ -21,21 +20,22 @@ class MappingScreen extends StatefulWidget {
 
   @override
   State<MappingScreen> createState() => _MappingScreenState();
-
 }
 
 class _MappingScreenState extends State<MappingScreen>
     with SingleTickerProviderStateMixin {
   bool isRunning = false;
+  bool inRamp = false;
+  String currentStage = "min_sensation";
   int currentAmplitude = 10;
   int currentElectrode = 1;
+
   int ramp = 1; // 1, 2, or 3 time views
   final int totalElectrodes = 30;
 
   late TabController _tabController;
 
   final DatabaseService _databaseService = DatabaseService();
-
 
   @override
   void initState() {
@@ -52,6 +52,7 @@ class _MappingScreenState extends State<MappingScreen>
   void toggleStimulation() {
     setState(() {
       isRunning = !isRunning;
+      inRamp = true;
     });
   }
 
@@ -267,11 +268,16 @@ class _MappingScreenState extends State<MappingScreen>
                                           icon: Icon(
                                             isRunning
                                                 ? Icons.stop
-                                                : Icons.play_arrow,
+                                                : inRamp
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
                                             color: Colors.white,
                                           ),
-                                          label:
-                                              Text(isRunning ? "Stop" : "Run"),
+                                          label: Text(isRunning
+                                              ? "Stop"
+                                              : inRamp
+                                                  ? "Resume"
+                                                  : "Run"),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isRunning
                                                 ? Colors.red
@@ -286,64 +292,141 @@ class _MappingScreenState extends State<MappingScreen>
                                         ElevatedButton.icon(
                                           onPressed: isRunning
                                               ? () async {
-                                            final result = await showDialog(
-                                              context: context,
-                                              builder: (context) => AddSensationDialog(),
-                                            );
+                                                  switch (currentStage) {
+                                                    case "add_sensation":
+                                                      final result =
+                                                          await showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AddSensationDialog(),
+                                                      );
 
-                                            if (result != null) {
-                                              // Extract data from result
-                                              Map<String, dynamic> sensationData;
+                                                      if (result != null) {
+                                                        Map<String, dynamic>
+                                                            sensationData;
 
-                                              if (result is Map<String, dynamic>) {
-                                                sensationData = result;
-                                              } else {
-                                                // Handle the case where only sensation string is returned (backward compatibility)
-                                                sensationData = {
-                                                  'sensation': result,
-                                                  'areas': [],
-                                                };
-                                              }
+                                                        if (result is Map<
+                                                            String, dynamic>) {
+                                                          sensationData =
+                                                              result;
+                                                        } else {
+                                                          sensationData = {
+                                                            'sensation': result,
+                                                            'areas': [],
+                                                          };
+                                                        }
 
-                                              // Save the data to Firebase
-                                              bool success = await _databaseService.savePatientSensation(
-                                                patientID: widget.patientId,
-                                                sensation: sensationData['sensation'],
-                                                footAreas: sensationData['areas'],
-                                                electrodeID: currentElectrode.toString(),
-                                                amplitude: currentAmplitude.toDouble(),
-                                              );
+                                                        bool success =
+                                                            await _databaseService
+                                                                .savePatientSensation(
+                                                          patientID:
+                                                              widget.patientId,
+                                                          sensation:
+                                                              sensationData[
+                                                                  'sensation'],
+                                                          footAreas:
+                                                              sensationData[
+                                                                  'areas'],
+                                                          electrodeID:
+                                                              currentElectrode
+                                                                  .toString(),
+                                                          amplitude:
+                                                              currentAmplitude
+                                                                  .toDouble(),
+                                                        );
 
-                                              if (success) {
-                                                // Show success message if needed
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text('Sensation data saved successfully'),
-                                                      backgroundColor: Colors.green,
-                                                      duration: Duration(seconds: 2),
-                                                    )
-                                                );
-                                              } else {
-                                                // Show error message
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text('Failed to save sensation data'),
-                                                      backgroundColor: Colors.red,
-                                                      duration: Duration(seconds: 2),
-                                                    )
-                                                );
-                                              }
-                                            } else {
-                                              print("User skipped adding sensations.");
-                                            }
-                                          }
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(success
+                                                                ? 'Sensation data saved successfully'
+                                                                : 'Failed to save sensation data'),
+                                                            backgroundColor:
+                                                                success
+                                                                    ? Colors
+                                                                        .green
+                                                                    : Colors
+                                                                        .red,
+                                                            duration: Duration(
+                                                                seconds: 2),
+                                                          ),
+                                                        );
+
+                                                        if (success) {
+                                                          setState(() {
+                                                            currentStage =
+                                                                "max_sensation";
+                                                          });
+                                                        }
+                                                      } else {
+                                                        print(
+                                                            "User skipped adding sensations.");
+                                                      }
+                                                      break;
+
+                                                    case "min_sensation":
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                              'Minimum sensation was recorded successfully'),
+                                                          backgroundColor:
+                                                              Colors.green,
+                                                          duration: Duration(
+                                                              seconds: 2),
+                                                        ),
+                                                      );
+                                                      setState(() {
+                                                        currentStage =
+                                                            "add_sensation";
+                                                      });
+
+                                                      break;
+
+                                                    case "max_sensation":
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                              'Ramp was completed successfully'),
+                                                          backgroundColor:
+                                                              Colors.green,
+                                                          duration: Duration(
+                                                              seconds: 2),
+                                                        ),
+                                                      );
+                                                      setState(() {
+                                                        inRamp = false;
+                                                        isRunning = false;
+                                                        selectRamp(2);
+                                                        currentStage =
+                                                            "min_sensation";
+                                                      });
+                                                      break;
+
+                                                    default:
+                                                      print(
+                                                          "Unhandled stage: $currentStage");
+                                                  }
+                                                }
                                               : null,
-                                          icon: Icon(Icons.add, color: Colors.white),
-                                          label: Text("Add sensation"),
+                                          icon: Icon(Icons.add,
+                                              color: Colors.white),
+                                          label: Text(
+                                            currentStage == "add_sensation"
+                                                ? "Add sensation"
+                                                : currentStage ==
+                                                        "min_sensation"
+                                                    ? "Min sensation"
+                                                    : "Max sensation",
+                                          ),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Color(0xFFE18700),
                                             foregroundColor: Colors.white,
-                                            minimumSize: Size(240, 50), // Increased width
+                                            minimumSize: Size(240, 50),
                                           ),
                                         ),
                                       ],
@@ -468,22 +551,36 @@ class _MappingScreenState extends State<MappingScreen>
                                             // Big decrement
                                             _buildAmplitudeButton(
                                                 Icons.remove,
-                                                () => adjustAmplitude(-10),
+                                                !isRunning
+                                                    ? null
+                                                    : currentAmplitude < 10
+                                                        ? null
+                                                        : () => adjustAmplitude(
+                                                            -10),
                                                 "[10 μA]"),
                                             // Small decrement
                                             _buildAmplitudeButton(
                                                 Icons.remove,
-                                                () => adjustAmplitude(-2),
+                                                !isRunning
+                                                    ? null
+                                                    : currentAmplitude == 0
+                                                        ? null
+                                                        : () =>
+                                                            adjustAmplitude(-2),
                                                 "[2 μA]"),
                                             // Small increment
                                             _buildAmplitudeButton(
                                                 Icons.add,
-                                                () => adjustAmplitude(2),
+                                                !isRunning
+                                                    ? null
+                                                    : () => adjustAmplitude(2),
                                                 "[2 μA]"),
                                             // Big increment
                                             _buildAmplitudeButton(
                                                 Icons.add,
-                                                () => adjustAmplitude(10),
+                                                !isRunning
+                                                    ? null
+                                                    : () => adjustAmplitude(10),
                                                 "[10 μA]"),
                                           ],
                                         ),
@@ -609,7 +706,7 @@ class _MappingScreenState extends State<MappingScreen>
                                 ],
                               ),
 
-                              SizedBox(height: 16), // Reduced from 24
+                              SizedBox(height: 16),
 
                               // Electrode navigation
                               Row(
@@ -617,95 +714,7 @@ class _MappingScreenState extends State<MappingScreen>
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Left/Right electrode navigation - centered within its space
-                                  Expanded(
-                                    flex: 1,
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          // Left button
-                                          Material(
-                                            color: isRunning
-                                                ? Colors.grey[300]
-                                                : Color(0xFFD9E5E7),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            child: InkWell(
-                                              onTap: isRunning
-                                                  ? null
-                                                  : () => navigateElectrode(-1),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              child: Container(
-                                                width: 40,
-                                                height: 40,
-                                                child: Icon(
-                                                  Icons.chevron_left,
-                                                  color: isRunning
-                                                      ? Colors.grey
-                                                      : Color(0xFF3D6673),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Electrode indicator - take up full width
-                                          Expanded(
-                                            child: Container(
-                                              height: 40,
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 8),
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 16),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color: Colors.grey[300]!),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  "Electrode $currentElectrode / $totalElectrodes",
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: Color(0xFF3D6673),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Right button
-                                          Material(
-                                            color: isRunning
-                                                ? Colors.grey[300]
-                                                : Color(0xFFD9E5E7),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            child: InkWell(
-                                              onTap: isRunning
-                                                  ? null
-                                                  : () => navigateElectrode(1),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              child: Container(
-                                                width: 40,
-                                                height: 40,
-                                                child: Icon(
-                                                  Icons.chevron_right,
-                                                  color: isRunning
-                                                      ? Colors.grey
-                                                      : Color(0xFF3D6673),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
+                                  _buildElectrodeNavigation(),
                                   // Action buttons - centered within its space
                                   Expanded(
                                     flex: 1,
@@ -862,14 +871,14 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   Widget _buildAmplitudeButton(
-      IconData icon, VoidCallback onPressed, String label) {
+      IconData icon, VoidCallback? onPressed, String label) {
     // Check if this is a big amplitude change button (10μA)
     final bool isBigChange = label.contains("10");
 
     return Column(
       children: [
         Material(
-          color: Color(0xFF3D6673),
+          color: onPressed == null ? Colors.grey : Color(0xFF3D6673),
           borderRadius: BorderRadius.circular(4),
           child: InkWell(
             onTap: onPressed,
@@ -896,6 +905,80 @@ class _MappingScreenState extends State<MappingScreen>
           style: TextStyle(fontSize: 10, color: Colors.grey[600]),
         ),
       ],
+    );
+  }
+
+  Widget _buildElectrodeNavigation() {
+    return Expanded(
+      flex: 1,
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Left button
+            Material(
+              color: isRunning ? Colors.grey[300] : Color(0xFFD9E5E7),
+              borderRadius: BorderRadius.circular(4),
+              child: InkWell(
+                onTap: isRunning || currentElectrode == 1
+                    ? null
+                    : () => navigateElectrode(-1),
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  child: Icon(
+                    Icons.chevron_left,
+                    color: isRunning ? Colors.grey : Color(0xFF3D6673),
+                  ),
+                ),
+              ),
+            ),
+
+            // Electrode indicator - take up full width
+            Expanded(
+              child: Container(
+                height: 40,
+                margin: EdgeInsets.symmetric(horizontal: 8),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Center(
+                  child: Text(
+                    "Electrode $currentElectrode / $totalElectrodes",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF3D6673),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Right button
+            Material(
+              color: isRunning ? Colors.grey[300] : Color(0xFFD9E5E7),
+              borderRadius: BorderRadius.circular(4),
+              child: InkWell(
+                onTap: isRunning || currentElectrode == totalElectrodes
+                    ? null
+                    : () => navigateElectrode(1),
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: isRunning ? Colors.grey : Color(0xFF3D6673),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
