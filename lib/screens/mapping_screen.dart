@@ -569,7 +569,7 @@ class _MappingScreenState extends State<MappingScreen>
                                 ],
                               ),
 
-                              SizedBox(height: 16), // Reduced from 24
+                              SizedBox(height: 16),
 
                               // Electrode navigation
                               Row(
@@ -577,95 +577,7 @@ class _MappingScreenState extends State<MappingScreen>
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Left/Right electrode navigation - centered within its space
-                                  Expanded(
-                                    flex: 1,
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          // Left button
-                                          Material(
-                                            color: isRunning
-                                                ? Colors.grey[300]
-                                                : Color(0xFFD9E5E7),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            child: InkWell(
-                                              onTap: isRunning
-                                                  ? null
-                                                  : () => navigateElectrode(-1),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              child: Container(
-                                                width: 40,
-                                                height: 40,
-                                                child: Icon(
-                                                  Icons.chevron_left,
-                                                  color: isRunning
-                                                      ? Colors.grey
-                                                      : Color(0xFF3D6673),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Electrode indicator - take up full width
-                                          Expanded(
-                                            child: Container(
-                                              height: 40,
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 8),
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 16),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color: Colors.grey[300]!),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  "Electrode $currentElectrode / $totalElectrodes",
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: Color(0xFF3D6673),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Right button
-                                          Material(
-                                            color: isRunning
-                                                ? Colors.grey[300]
-                                                : Color(0xFFD9E5E7),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            child: InkWell(
-                                              onTap: isRunning
-                                                  ? null
-                                                  : () => navigateElectrode(1),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              child: Container(
-                                                width: 40,
-                                                height: 40,
-                                                child: Icon(
-                                                  Icons.chevron_right,
-                                                  color: isRunning
-                                                      ? Colors.grey
-                                                      : Color(0xFF3D6673),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
+                                  _buildElectrodeNavigation(),
                                   // Action buttons - centered within its space
                                   Expanded(
                                     flex: 1,
@@ -856,6 +768,80 @@ class _MappingScreenState extends State<MappingScreen>
           style: TextStyle(fontSize: 10, color: Colors.grey[600]),
         ),
       ],
+    );
+  }
+
+  Widget _buildElectrodeNavigation() {
+    return Expanded(
+      flex: 1,
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Left button
+            Material(
+              color: isRunning ? Colors.grey[300] : Color(0xFFD9E5E7),
+              borderRadius: BorderRadius.circular(4),
+              child: InkWell(
+                onTap: isRunning || currentElectrode == 1
+                    ? null
+                    : () => navigateElectrode(-1),
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  child: Icon(
+                    Icons.chevron_left,
+                    color: isRunning ? Colors.grey : Color(0xFF3D6673),
+                  ),
+                ),
+              ),
+            ),
+
+            // Electrode indicator - take up full width
+            Expanded(
+              child: Container(
+                height: 40,
+                margin: EdgeInsets.symmetric(horizontal: 8),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Center(
+                  child: Text(
+                    "Electrode $currentElectrode / $totalElectrodes",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF3D6673),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Right button
+            Material(
+              color: isRunning ? Colors.grey[300] : Color(0xFFD9E5E7),
+              borderRadius: BorderRadius.circular(4),
+              child: InkWell(
+                onTap: isRunning || currentElectrode == totalElectrodes
+                    ? null
+                    : () => navigateElectrode(1),
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: isRunning ? Colors.grey : Color(0xFF3D6673),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
