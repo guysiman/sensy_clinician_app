@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../components/add_sensation_dialog.dart';
+import '../services/database.dart';
 
 class MappingScreen extends StatefulWidget {
   final String patientId;
@@ -30,6 +31,8 @@ class _MappingScreenState extends State<MappingScreen>
   final int totalElectrodes = 30;
 
   late TabController _tabController;
+
+  final DatabaseService _databaseService = DatabaseService();
 
   @override
   void initState() {
@@ -288,8 +291,66 @@ class _MappingScreenState extends State<MappingScreen>
                                                   );
 
                                                   if (result != null) {
-                                                    print(
-                                                        "Selected sensations: $result");
+                                                    // Extract data from result
+                                                    Map<String, dynamic>
+                                                        sensationData;
+
+                                                    if (result is Map<String,
+                                                        dynamic>) {
+                                                      sensationData = result;
+                                                    } else {
+                                                      // Handle the case where only sensation string is returned (backward compatibility)
+                                                      sensationData = {
+                                                        'sensation': result,
+                                                        'areas': [],
+                                                      };
+                                                    }
+
+                                                    // Save the data to Firebase
+                                                    bool success =
+                                                        await _databaseService
+                                                            .savePatientSensation(
+                                                      patientID:
+                                                          widget.patientId,
+                                                      sensation: sensationData[
+                                                          'sensation'],
+                                                      footAreas: sensationData[
+                                                          'areas'],
+                                                      electrodeID:
+                                                          currentElectrode
+                                                              .toString(),
+                                                      amplitude:
+                                                          currentAmplitude
+                                                              .toDouble(),
+                                                    );
+
+                                                    if (success) {
+                                                      // Show success message if needed
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                              SnackBar(
+                                                        content: Text(
+                                                            'Sensation data saved successfully'),
+                                                        backgroundColor:
+                                                            Colors.green,
+                                                        duration: Duration(
+                                                            seconds: 2),
+                                                      ));
+                                                    } else {
+                                                      // Show error message
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                              SnackBar(
+                                                        content: Text(
+                                                            'Failed to save sensation data'),
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                        duration: Duration(
+                                                            seconds: 2),
+                                                      ));
+                                                    }
                                                   } else {
                                                     print(
                                                         "User skipped adding sensations.");
