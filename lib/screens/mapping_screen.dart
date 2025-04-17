@@ -25,8 +25,11 @@ class MappingScreen extends StatefulWidget {
 class _MappingScreenState extends State<MappingScreen>
     with SingleTickerProviderStateMixin {
   bool isRunning = false;
+  bool inRamp = false;
+  String currentStage = "min_sensation";
   int currentAmplitude = 10;
   int currentElectrode = 1;
+
   int ramp = 1; // 1, 2, or 3 time views
   final int totalElectrodes = 30;
 
@@ -49,6 +52,7 @@ class _MappingScreenState extends State<MappingScreen>
   void toggleStimulation() {
     setState(() {
       isRunning = !isRunning;
+      inRamp = true;
     });
   }
 
@@ -264,11 +268,16 @@ class _MappingScreenState extends State<MappingScreen>
                                           icon: Icon(
                                             isRunning
                                                 ? Icons.stop
-                                                : Icons.play_arrow,
+                                                : inRamp
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
                                             color: Colors.white,
                                           ),
-                                          label:
-                                              Text(isRunning ? "Stop" : "Run"),
+                                          label: Text(isRunning
+                                              ? "Stop"
+                                              : inRamp
+                                                  ? "Resume"
+                                                  : "Run"),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isRunning
                                                 ? Colors.red
@@ -283,88 +292,141 @@ class _MappingScreenState extends State<MappingScreen>
                                         ElevatedButton.icon(
                                           onPressed: isRunning
                                               ? () async {
-                                                  final result =
-                                                      await showDialog(
-                                                    context: context,
-                                                    builder: (context) =>
-                                                        AddSensationDialog(),
-                                                  );
+                                                  switch (currentStage) {
+                                                    case "add_sensation":
+                                                      final result =
+                                                          await showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AddSensationDialog(),
+                                                      );
 
-                                                  if (result != null) {
-                                                    // Extract data from result
-                                                    Map<String, dynamic>
-                                                        sensationData;
+                                                      if (result != null) {
+                                                        Map<String, dynamic>
+                                                            sensationData;
 
-                                                    if (result is Map<String,
-                                                        dynamic>) {
-                                                      sensationData = result;
-                                                    } else {
-                                                      // Handle the case where only sensation string is returned (backward compatibility)
-                                                      sensationData = {
-                                                        'sensation': result,
-                                                        'areas': [],
-                                                      };
-                                                    }
+                                                        if (result is Map<
+                                                            String, dynamic>) {
+                                                          sensationData =
+                                                              result;
+                                                        } else {
+                                                          sensationData = {
+                                                            'sensation': result,
+                                                            'areas': [],
+                                                          };
+                                                        }
 
-                                                    // Save the data to Firebase
-                                                    bool success =
-                                                        await _databaseService
-                                                            .savePatientSensation(
-                                                      patientID:
-                                                          widget.patientId,
-                                                      sensation: sensationData[
-                                                          'sensation'],
-                                                      footAreas: sensationData[
-                                                          'areas'],
-                                                      electrodeID:
-                                                          currentElectrode
-                                                              .toString(),
-                                                      amplitude:
-                                                          currentAmplitude
-                                                              .toDouble(),
-                                                    );
+                                                        bool success =
+                                                            await _databaseService
+                                                                .savePatientSensation(
+                                                          patientID:
+                                                              widget.patientId,
+                                                          sensation:
+                                                              sensationData[
+                                                                  'sensation'],
+                                                          footAreas:
+                                                              sensationData[
+                                                                  'areas'],
+                                                          electrodeID:
+                                                              currentElectrode
+                                                                  .toString(),
+                                                          amplitude:
+                                                              currentAmplitude
+                                                                  .toDouble(),
+                                                        );
 
-                                                    if (success) {
-                                                      // Show success message if needed
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(success
+                                                                ? 'Sensation data saved successfully'
+                                                                : 'Failed to save sensation data'),
+                                                            backgroundColor:
+                                                                success
+                                                                    ? Colors
+                                                                        .green
+                                                                    : Colors
+                                                                        .red,
+                                                            duration: Duration(
+                                                                seconds: 2),
+                                                          ),
+                                                        );
+
+                                                        if (success) {
+                                                          setState(() {
+                                                            currentStage =
+                                                                "max_sensation";
+                                                          });
+                                                        }
+                                                      } else {
+                                                        print(
+                                                            "User skipped adding sensations.");
+                                                      }
+                                                      break;
+
+                                                    case "min_sensation":
                                                       ScaffoldMessenger.of(
                                                               context)
                                                           .showSnackBar(
-                                                              SnackBar(
-                                                        content: Text(
-                                                            'Sensation data saved successfully'),
-                                                        backgroundColor:
-                                                            Colors.green,
-                                                        duration: Duration(
-                                                            seconds: 2),
-                                                      ));
-                                                    } else {
-                                                      // Show error message
+                                                        SnackBar(
+                                                          content: Text(
+                                                              'Minimum sensation was recorded successfully'),
+                                                          backgroundColor:
+                                                              Colors.green,
+                                                          duration: Duration(
+                                                              seconds: 2),
+                                                        ),
+                                                      );
+                                                      setState(() {
+                                                        currentStage =
+                                                            "add_sensation";
+                                                      });
+
+                                                      break;
+
+                                                    case "max_sensation":
                                                       ScaffoldMessenger.of(
                                                               context)
                                                           .showSnackBar(
-                                                              SnackBar(
-                                                        content: Text(
-                                                            'Failed to save sensation data'),
-                                                        backgroundColor:
-                                                            Colors.red,
-                                                        duration: Duration(
-                                                            seconds: 2),
-                                                      ));
-                                                    }
-                                                  } else {
-                                                    print(
-                                                        "User skipped adding sensations.");
+                                                        SnackBar(
+                                                          content: Text(
+                                                              'Ramp was completed successfully'),
+                                                          backgroundColor:
+                                                              Colors.green,
+                                                          duration: Duration(
+                                                              seconds: 2),
+                                                        ),
+                                                      );
+                                                      setState(() {
+                                                        inRamp = false;
+                                                        isRunning = false;
+                                                        selectRamp(2);
+                                                        currentStage =
+                                                            "min_sensation";
+                                                      });
+                                                      break;
+
+                                                    default:
+                                                      print(
+                                                          "Unhandled stage: $currentStage");
                                                   }
                                                 }
                                               : null,
                                           icon: Icon(Icons.add,
                                               color: Colors.white),
-                                          label: Text("Add sensation"),
+                                          label: Text(
+                                            currentStage == "add_sensation"
+                                                ? "Add sensation"
+                                                : currentStage ==
+                                                        "min_sensation"
+                                                    ? "Min sensation"
+                                                    : "Max sensation",
+                                          ),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Color(0xFFE18700),
                                             foregroundColor: Colors.white,
-                                            minimumSize: Size(
-                                                240, 50), // Increased width
+                                            minimumSize: Size(240, 50),
                                           ),
                                         ),
                                       ],
@@ -489,22 +551,36 @@ class _MappingScreenState extends State<MappingScreen>
                                             // Big decrement
                                             _buildAmplitudeButton(
                                                 Icons.remove,
-                                                () => adjustAmplitude(-10),
+                                                !isRunning
+                                                    ? null
+                                                    : currentAmplitude < 10
+                                                        ? null
+                                                        : () => adjustAmplitude(
+                                                            -10),
                                                 "[10 μA]"),
                                             // Small decrement
                                             _buildAmplitudeButton(
                                                 Icons.remove,
-                                                () => adjustAmplitude(-2),
+                                                !isRunning
+                                                    ? null
+                                                    : currentAmplitude == 0
+                                                        ? null
+                                                        : () =>
+                                                            adjustAmplitude(-2),
                                                 "[2 μA]"),
                                             // Small increment
                                             _buildAmplitudeButton(
                                                 Icons.add,
-                                                () => adjustAmplitude(2),
+                                                !isRunning
+                                                    ? null
+                                                    : () => adjustAmplitude(2),
                                                 "[2 μA]"),
                                             // Big increment
                                             _buildAmplitudeButton(
                                                 Icons.add,
-                                                () => adjustAmplitude(10),
+                                                !isRunning
+                                                    ? null
+                                                    : () => adjustAmplitude(10),
                                                 "[10 μA]"),
                                           ],
                                         ),
@@ -795,14 +871,14 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   Widget _buildAmplitudeButton(
-      IconData icon, VoidCallback onPressed, String label) {
+      IconData icon, VoidCallback? onPressed, String label) {
     // Check if this is a big amplitude change button (10μA)
     final bool isBigChange = label.contains("10");
 
     return Column(
       children: [
         Material(
-          color: Color(0xFF3D6673),
+          color: onPressed == null ? Colors.grey : Color(0xFF3D6673),
           borderRadius: BorderRadius.circular(4),
           child: InkWell(
             onTap: onPressed,
