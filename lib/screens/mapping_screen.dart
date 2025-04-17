@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+import '../components/add_sensation_dialog.dart';
+
 class MappingScreen extends StatefulWidget {
   final String patientId;
   final String ipgSerial;
@@ -19,13 +21,14 @@ class MappingScreen extends StatefulWidget {
   State<MappingScreen> createState() => _MappingScreenState();
 }
 
-class _MappingScreenState extends State<MappingScreen> with SingleTickerProviderStateMixin {
+class _MappingScreenState extends State<MappingScreen>
+    with SingleTickerProviderStateMixin {
   bool isRunning = false;
   int currentAmplitude = 10;
   int currentElectrode = 1;
-  int selectedTimeView = 1; // 1, 2, or 3 time views
+  int ramp = 1; // 1, 2, or 3 time views
   final int totalElectrodes = 30;
-  
+
   late TabController _tabController;
 
   @override
@@ -55,11 +58,12 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
 
   void navigateElectrode(int direction) {
     if (isRunning) return; // Disabled when running
-    
+
     setState(() {
       currentElectrode += direction;
       if (currentElectrode < 1) currentElectrode = 1;
-      if (currentElectrode > totalElectrodes) currentElectrode = totalElectrodes;
+      if (currentElectrode > totalElectrodes)
+        currentElectrode = totalElectrodes;
     });
   }
 
@@ -71,9 +75,9 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
     // Implement discard functionality
   }
 
-  void selectTimeView(int timeView) {
+  void selectRamp(int newRamp) {
     setState(() {
-      selectedTimeView = timeView;
+      ramp = newRamp;
     });
   }
 
@@ -95,7 +99,7 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
             child: Text(
               'Back',
               style: TextStyle(
-                color: Color(0xFF2D4F63), 
+                color: Color(0xFF2D4F63),
                 fontSize: 16,
                 fontWeight: FontWeight.normal,
               ),
@@ -204,7 +208,8 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: Color(0xFF3D6673),
                 indicatorWeight: 3,
-                dividerColor: Colors.transparent, // Remove the permanent grey line
+                dividerColor:
+                    Colors.transparent, // Remove the permanent grey line
                 tabs: [
                   Tab(text: "Mapping"),
                   Tab(text: "Mapped"),
@@ -212,8 +217,10 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
               ),
             ),
           ),
-          Divider(height: 1, color: Colors.grey[300]), // Add a separate divider below the tabs
-          
+          Divider(
+              height: 1,
+              color: Colors.grey[300]), // Add a separate divider below the tabs
+
           // Main content
           Expanded(
             child: TabBarView(
@@ -227,7 +234,9 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                       // Main content area with blue border
                       Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xFF3D6673), width: 2), // Updated to match Figma
+                          border: Border.all(
+                              color: Color(0xFF3D6673),
+                              width: 2), // Updated to match Figma
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Padding(
@@ -236,47 +245,78 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                             children: [
                               // Control buttons row
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Left side controls - centered in left half
                                   Expanded(
                                     flex: 1,
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Changed to spaceEvenly
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .spaceEvenly, // Changed to spaceEvenly
                                       children: [
                                         // Start/Stop button
                                         ElevatedButton.icon(
                                           onPressed: toggleStimulation,
-                                          icon: Icon(isRunning ? Icons.stop : Icons.play_arrow),
-                                          label: Text(isRunning ? "Stop" : "Start"),
+                                          icon: Icon(
+                                            isRunning
+                                                ? Icons.stop
+                                                : Icons.play_arrow,
+                                            color: Colors.white,
+                                          ),
+                                          label:
+                                              Text(isRunning ? "Stop" : "Run"),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: isRunning ? Colors.red : Color(0xFFE8AB0C),
+                                            backgroundColor: isRunning
+                                                ? Colors.red
+                                                : Color(0xFF489F32),
                                             foregroundColor: Colors.white,
-                                            minimumSize: Size(240, 50), // Increased width
+                                            minimumSize: Size(
+                                                240, 50), // Increased width
                                           ),
                                         ),
-                                        
+
                                         // Add Sensation button
                                         ElevatedButton.icon(
-                                          onPressed: () {},
-                                          icon: Icon(Icons.add),
+                                          onPressed: isRunning
+                                              ? () async {
+                                                  final result =
+                                                      await showDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        AddSensationDialog(),
+                                                  );
+
+                                                  if (result != null) {
+                                                    print(
+                                                        "Selected sensations: $result");
+                                                  } else {
+                                                    print(
+                                                        "User skipped adding sensations.");
+                                                  }
+                                                }
+                                              : null,
+                                          icon: Icon(Icons.add,
+                                              color: Colors.white),
                                           label: Text("Add sensation"),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Color(0xFF3D6673),
+                                            backgroundColor: Color(0xFFE18700),
                                             foregroundColor: Colors.white,
-                                            minimumSize: Size(240, 50), // Increased width
+                                            minimumSize: Size(
+                                                240, 50), // Increased width
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  
+
                                   // Right side - Time selection centered
                                   Expanded(
                                     flex: 1,
                                     child: Center(
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           _buildTimeButton(1),
                                           SizedBox(width: 16),
@@ -289,13 +329,15 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                   ),
                                 ],
                               ),
-                              
+
                               // Parameters link and status indicator
                               Padding(
-                                padding: const EdgeInsets.only(top: 12.0), // Increased vertical spacing
+                                padding: const EdgeInsets.only(
+                                    top: 12.0), // Increased vertical spacing
                                 child: Row(
                                   children: [
-                                    Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                                    Icon(Icons.info_outline,
+                                        size: 16, color: Colors.grey),
                                     TextButton(
                                       onPressed: () {},
                                       child: Text(
@@ -306,7 +348,6 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                         ),
                                       ),
                                     ),
-                                    
                                     if (isRunning) ...[
                                       SizedBox(width: 16),
                                       Container(
@@ -328,9 +369,9 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                   ],
                                 ),
                               ),
-                              
+
                               SizedBox(height: 12), // Reduced from 16
-                              
+
                               // Amplitude controls and graph
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,23 +380,31 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                   Expanded(
                                     flex: 1,
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
                                         // Current amplitude display - increased size
                                         Container(
                                           width: 120, // Increased from 80
                                           height: 70, // Reduced from 80
-                                          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20), // Reduced padding
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 8,
+                                              horizontal:
+                                                  20), // Reduced padding
                                           decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.grey[400]!),
-                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(
+                                                color: Colors.grey[400]!),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
                                           ),
                                           child: Center(
                                             child: Text(
                                               "$currentAmplitude",
                                               style: TextStyle(
-                                                fontSize: 36, // Increased from 24
+                                                fontSize:
+                                                    36, // Increased from 24
                                                 fontWeight: FontWeight.bold,
                                                 color: Color(0xFF3D6673),
                                               ),
@@ -363,22 +412,39 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                           ),
                                         ),
                                         SizedBox(height: 4), // Reduced from 6
-                                        Text("μA", style: TextStyle(color: Colors.grey[600], fontSize: 14)), // Increased font size
-                                        
+                                        Text("μA",
+                                            style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize:
+                                                    14)), // Increased font size
+
                                         SizedBox(height: 20), // Reduced from 26
-                                        
+
                                         // Amplitude adjustment buttons - increased size and spacing
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly, // More spacing between buttons
+                                          mainAxisAlignment: MainAxisAlignment
+                                              .spaceEvenly, // More spacing between buttons
                                           children: [
                                             // Big decrement
-                                            _buildAmplitudeButton(Icons.remove, () => adjustAmplitude(-10), "[10 μA]"),
+                                            _buildAmplitudeButton(
+                                                Icons.remove,
+                                                () => adjustAmplitude(-10),
+                                                "[10 μA]"),
                                             // Small decrement
-                                            _buildAmplitudeButton(Icons.remove, () => adjustAmplitude(-2), "[2 μA]"),
+                                            _buildAmplitudeButton(
+                                                Icons.remove,
+                                                () => adjustAmplitude(-2),
+                                                "[2 μA]"),
                                             // Small increment
-                                            _buildAmplitudeButton(Icons.add, () => adjustAmplitude(2), "[2 μA]"),
+                                            _buildAmplitudeButton(
+                                                Icons.add,
+                                                () => adjustAmplitude(2),
+                                                "[2 μA]"),
                                             // Big increment
-                                            _buildAmplitudeButton(Icons.add, () => adjustAmplitude(10), "[10 μA]"),
+                                            _buildAmplitudeButton(
+                                                Icons.add,
+                                                () => adjustAmplitude(10),
+                                                "[10 μA]"),
                                           ],
                                         ),
                                       ],
@@ -391,7 +457,8 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                     child: Container(
                                       height: 260, // Reduced from 280
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey[300]!),
+                                        border: Border.all(
+                                            color: Colors.grey[300]!),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Padding(
@@ -410,7 +477,8 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                                 sideTitles: SideTitles(
                                                   showTitles: true,
                                                   interval: 10,
-                                                  getTitlesWidget: (value, meta) {
+                                                  getTitlesWidget:
+                                                      (value, meta) {
                                                     return Text(
                                                       value.toInt().toString(),
                                                       style: TextStyle(
@@ -423,14 +491,16 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                                 ),
                                                 axisNameWidget: Text(
                                                   'Amplitude',
-                                                  style: TextStyle(fontSize: 10),
+                                                  style:
+                                                      TextStyle(fontSize: 10),
                                                 ),
                                               ),
                                               bottomTitles: AxisTitles(
                                                 sideTitles: SideTitles(
                                                   showTitles: true,
                                                   interval: 3,
-                                                  getTitlesWidget: (value, meta) {
+                                                  getTitlesWidget:
+                                                      (value, meta) {
                                                     return Text(
                                                       value.toInt().toString(),
                                                       style: TextStyle(
@@ -443,17 +513,21 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                                 ),
                                                 axisNameWidget: Text(
                                                   'Time',
-                                                  style: TextStyle(fontSize: 10),
+                                                  style:
+                                                      TextStyle(fontSize: 10),
                                                 ),
                                               ),
                                               rightTitles: AxisTitles(
-                                                sideTitles: SideTitles(showTitles: false),
+                                                sideTitles: SideTitles(
+                                                    showTitles: false),
                                               ),
                                               topTitles: AxisTitles(
-                                                sideTitles: SideTitles(showTitles: false),
+                                                sideTitles: SideTitles(
+                                                    showTitles: false),
                                               ),
                                             ),
-                                            borderData: FlBorderData(show: false),
+                                            borderData:
+                                                FlBorderData(show: false),
                                             lineBarsData: [
                                               LineChartBarData(
                                                 spots: [
@@ -467,7 +541,8 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                                 barWidth: 2,
                                                 dotData: FlDotData(
                                                   show: true,
-                                                  getDotPainter: (spot, percent, barData, index) {
+                                                  getDotPainter: (spot, percent,
+                                                      barData, index) {
                                                     return FlDotCirclePainter(
                                                       radius: 4,
                                                       color: Color(0xFF3D6673),
@@ -477,7 +552,8 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                                 ),
                                                 belowBarData: BarAreaData(
                                                   show: true,
-                                                  color: Color(0xFF3D6673).withOpacity(0.2),
+                                                  color: Color(0xFF3D6673)
+                                                      .withOpacity(0.2),
                                                 ),
                                               ),
                                             ],
@@ -492,47 +568,61 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                   ),
                                 ],
                               ),
-                              
+
                               SizedBox(height: 16), // Reduced from 24
-                              
+
                               // Electrode navigation
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Left/Right electrode navigation - centered within its space
                                   Expanded(
                                     flex: 1,
                                     child: Center(
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           // Left button
                                           Material(
-                                            color: isRunning ? Colors.grey[300] : Color(0xFFD9E5E7),
-                                            borderRadius: BorderRadius.circular(4),
+                                            color: isRunning
+                                                ? Colors.grey[300]
+                                                : Color(0xFFD9E5E7),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
                                             child: InkWell(
-                                              onTap: isRunning ? null : () => navigateElectrode(-1),
-                                              borderRadius: BorderRadius.circular(4),
+                                              onTap: isRunning
+                                                  ? null
+                                                  : () => navigateElectrode(-1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                               child: Container(
                                                 width: 40,
                                                 height: 40,
                                                 child: Icon(
                                                   Icons.chevron_left,
-                                                  color: isRunning ? Colors.grey : Color(0xFF3D6673),
+                                                  color: isRunning
+                                                      ? Colors.grey
+                                                      : Color(0xFF3D6673),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                          
+
                                           // Electrode indicator - take up full width
                                           Expanded(
                                             child: Container(
                                               height: 40,
-                                              margin: EdgeInsets.symmetric(horizontal: 8),
-                                              padding: EdgeInsets.symmetric(horizontal: 16),
+                                              margin: EdgeInsets.symmetric(
+                                                  horizontal: 8),
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 16),
                                               decoration: BoxDecoration(
-                                                border: Border.all(color: Colors.grey[300]!),
-                                                borderRadius: BorderRadius.circular(4),
+                                                border: Border.all(
+                                                    color: Colors.grey[300]!),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
                                               ),
                                               child: Center(
                                                 child: Text(
@@ -545,20 +635,28 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                               ),
                                             ),
                                           ),
-                                          
+
                                           // Right button
                                           Material(
-                                            color: isRunning ? Colors.grey[300] : Color(0xFFD9E5E7),
-                                            borderRadius: BorderRadius.circular(4),
+                                            color: isRunning
+                                                ? Colors.grey[300]
+                                                : Color(0xFFD9E5E7),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
                                             child: InkWell(
-                                              onTap: isRunning ? null : () => navigateElectrode(1),
-                                              borderRadius: BorderRadius.circular(4),
+                                              onTap: isRunning
+                                                  ? null
+                                                  : () => navigateElectrode(1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                               child: Container(
                                                 width: 40,
                                                 height: 40,
                                                 child: Icon(
                                                   Icons.chevron_right,
-                                                  color: isRunning ? Colors.grey : Color(0xFF3D6673),
+                                                  color: isRunning
+                                                      ? Colors.grey
+                                                      : Color(0xFF3D6673),
                                                 ),
                                               ),
                                             ),
@@ -573,7 +671,8 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                     flex: 1,
                                     child: Center(
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           // Reset electrode
                                           OutlinedButton.icon(
@@ -581,23 +680,30 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                             icon: Icon(Icons.refresh),
                                             label: Text("Reset electrode"),
                                             style: OutlinedButton.styleFrom(
-                                              foregroundColor: Color(0xFF3D6673),
-                                              side: BorderSide(color: Color(0xFF3D6673)),
-                                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                              foregroundColor:
+                                                  Color(0xFF3D6673),
+                                              side: BorderSide(
+                                                  color: Color(0xFF3D6673)),
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 16, vertical: 12),
                                             ),
                                           ),
-                                          
+
                                           SizedBox(width: 16),
-                                          
+
                                           // Discard last sensation
                                           OutlinedButton.icon(
                                             onPressed: discardLastSensation,
                                             icon: Icon(Icons.delete_outline),
-                                            label: Text("Discard last sensation"),
+                                            label:
+                                                Text("Discard last sensation"),
                                             style: OutlinedButton.styleFrom(
-                                              foregroundColor: Color(0xFF3D6673),
-                                              side: BorderSide(color: Color(0xFF3D6673)),
-                                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                              foregroundColor:
+                                                  Color(0xFF3D6673),
+                                              side: BorderSide(
+                                                  color: Color(0xFF3D6673)),
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 16, vertical: 12),
                                             ),
                                           ),
                                         ],
@@ -610,7 +716,7 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                           ),
                         ),
                       ),
-                      
+
                       // IPG Info and Finish button - Removed padding
                       Container(
                         padding: EdgeInsets.only(top: 16),
@@ -622,30 +728,41 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                                 children: [
                                   Text(
                                     "IPG serial number: ",
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[700]),
                                   ),
-                                  Text(widget.ipgSerial, style: TextStyle(color: Colors.grey[700])),
+                                  Text(widget.ipgSerial,
+                                      style:
+                                          TextStyle(color: Colors.grey[700])),
                                   SizedBox(width: 24),
-                                  
                                   Text(
                                     "IPG FW version: ",
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[700]),
                                   ),
-                                  Text(widget.ipgFirmware, style: TextStyle(color: Colors.grey[700])),
+                                  Text(widget.ipgFirmware,
+                                      style:
+                                          TextStyle(color: Colors.grey[700])),
                                   SizedBox(width: 24),
-                                  
                                   Text(
                                     "IPG battery status: ",
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[700]),
                                   ),
-                                  Text("${widget.ipgBattery.toInt()}%", style: TextStyle(color: Colors.grey[700])),
+                                  Text("${widget.ipgBattery.toInt()}%",
+                                      style:
+                                          TextStyle(color: Colors.grey[700])),
                                 ],
                               ),
                             ),
-                            
+
                             // Finish button
                             ElevatedButton(
-                              onPressed: null, // Disabled until mapping is completed
+                              onPressed:
+                                  null, // Disabled until mapping is completed
                               child: Text("Finish"),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Color(0xFF3D6673),
@@ -661,7 +778,7 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
                     ],
                   ),
                 ),
-                
+
                 // Mapped Tab (placeholder)
                 Center(child: Text("Mapped content will go here")),
               ],
@@ -673,10 +790,10 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
   }
 
   Widget _buildTimeButton(int time) {
-    final bool isSelected = selectedTimeView == time;
-    
+    final bool isSelected = ramp == time;
+
     return InkWell(
-      onTap: () => selectTimeView(time),
+      onTap: () => selectRamp(time),
       child: Row(
         children: [
           Container(
@@ -704,10 +821,11 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildAmplitudeButton(IconData icon, VoidCallback onPressed, String label) {
+  Widget _buildAmplitudeButton(
+      IconData icon, VoidCallback onPressed, String label) {
     // Check if this is a big amplitude change button (10μA)
     final bool isBigChange = label.contains("10");
-    
+
     return Column(
       children: [
         Material(
@@ -717,13 +835,18 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
             onTap: onPressed,
             borderRadius: BorderRadius.circular(4),
             child: Container(
-              width: isBigChange ? 85 : 75,  // Bigger width for big amplitude change
-              height: isBigChange ? 65 : 55, // Bigger height for big amplitude change
-              child: Icon(
-                icon, 
-                color: Colors.white, 
-                size: isBigChange ? 42 : 36  // Bigger icon for big amplitude change
-              ),
+              width: isBigChange
+                  ? 85
+                  : 75, // Bigger width for big amplitude change
+              height: isBigChange
+                  ? 65
+                  : 55, // Bigger height for big amplitude change
+              child: Icon(icon,
+                  color: Colors.white,
+                  size: isBigChange
+                      ? 42
+                      : 36 // Bigger icon for big amplitude change
+                  ),
             ),
           ),
         ),
@@ -735,4 +858,4 @@ class _MappingScreenState extends State<MappingScreen> with SingleTickerProvider
       ],
     );
   }
-} 
+}
