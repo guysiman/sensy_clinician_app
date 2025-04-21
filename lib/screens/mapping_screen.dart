@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'dart:async';
 
 import '../components/add_sensation_dialog.dart';
 import '../services/database.dart';
@@ -25,8 +26,10 @@ class MappingScreen extends StatefulWidget {
 
 class _MappingScreenState extends State<MappingScreen>
     with SingleTickerProviderStateMixin {
-  bool isRunning = false;
-  int currentAmplitude = 10;
+  bool ramping = false;
+  bool hasStarted = false;
+  double currentAmplitude = 0;
+  double storedCurrentAmplitude = 0;
   int currentElectrode = 1;
   int ramp = 1; // 1, 2, or 3 time views
   final int totalElectrodes = 30;
@@ -35,6 +38,138 @@ class _MappingScreenState extends State<MappingScreen>
 
   final DatabaseService _databaseService = DatabaseService();
 
+  final double finalAmplitude = 600.0;
+  final List<double> increments = [1.33, 3.33, 3.33, 2.22, 4, 2.67];
+  final List<double> ampMarks = [50, 100, 150, 250, 400, 600];
+  final Duration interval = Duration(milliseconds: 100);
+  
+  Timer? timer;
+  List<FlSpot> chartData = [FlSpot(0, 0)];
+  int step = 0;
+  bool running = false;
+  bool notStarted = true;
+  bool paused = false;
+  bool clinicianMode = false;
+
+  bool minSensationRecorded = false;
+  bool meanSensationRecorded = false;
+  double? minSensationValue;
+  double? maxSensationValue;
+
+  void startRampUp() {
+    setState(() {
+      chartData = [FlSpot(0, 0)];
+    });
+
+    timer = Timer.periodic(interval, (timer) {
+      if(!running) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        double increment = 0.0;
+        for(int i=0; i < increments.length; i++) {
+          if (currentAmplitude < ampMarks[i]) {
+            increment = increments[i];
+            break;
+          }
+        }
+        currentAmplitude = (currentAmplitude + increment).clamp(0, finalAmplitude);
+        step++;
+        chartData.add(FlSpot(getTime(currentAmplitude), currentAmplitude));
+        if (currentAmplitude >= finalAmplitude) {
+          recordMaxSensation();
+          resetElectrode();
+          incrementRamp();
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  List<FlSpot> getSpots(double amplitude) {
+    List <FlSpot> result = [];
+    result.add(FlSpot(0, 0));
+    if (amplitude > 50){
+      result.add(FlSpot(3.75, 50));
+    }
+    if (amplitude > 100){
+      result.add(FlSpot(5.25, 100));
+    }
+    if (amplitude > 150){
+      result.add(FlSpot(6.75, 150));
+    }
+    if (amplitude > 250){
+      result.add(FlSpot(11.25, 250));
+    }
+    if (amplitude > 400){
+      result.add(FlSpot(15, 400));
+    }
+    result.add(FlSpot(getTime(amplitude), amplitude));
+    return result;
+  }
+
+  void newElectrode() {
+    stopStimulation();
+    setState(() {
+      minSensationRecorded = false;
+      meanSensationRecorded = false;
+    });
+  }
+
+  double getTime(double amplitude) {
+    double time = 0.0;
+    if (amplitude > 400) {
+      time = 15 + (amplitude - 400)/(26.6);
+    }
+    else if (amplitude > 250) {
+      time = 11.25 + (amplitude - 250) / (40);
+    }
+    else if (amplitude > 150) {
+      time = 6.75 + (amplitude - 150) / (22.2);
+    }
+    else if (amplitude > 100) {
+      time = 5.25 + (amplitude - 100) / (33.3);
+    }
+    else if (amplitude > 50) {
+      time = 3.75 + (amplitude - 50) / (33.3);
+    }
+    else {
+      time = 0 + (amplitude) / (13.3);
+    }
+    return time;
+  }
+
+   void stopStimulation() {
+    timer?.cancel();
+    setState(() {
+      setNotStarted();
+      currentAmplitude = 0;
+      storedCurrentAmplitude = 0;
+      step = 0;
+      ramping = false;
+    });
+  }
+
+  void recordMinSensation() {
+    setState(() {
+      minSensationValue = currentAmplitude;
+    minSensationRecorded = true;
+    });
+  }
+
+  void recordMeanSensation() {
+    setState(() {
+      meanSensationRecorded = true;
+    });
+  }
+
+  void recordMaxSensation() {
+    setState((){
+      maxSensationValue = currentAmplitude;
+    });
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -49,20 +184,95 @@ class _MappingScreenState extends State<MappingScreen>
 
   void toggleStimulation() {
     setState(() {
-      isRunning = !isRunning;
+      if (notStarted){
+        setRunning();
+      }else if(running){
+        setPaused();
+      }else if(paused){
+        setRunning();
+      }else if(clinicianMode) {
+        setPaused();
+      }
+    });
+  }
+
+  void storeCurrentAmplitude() {
+    setState(() {
+      storedCurrentAmplitude = currentAmplitude;
+    });
+  }
+
+  void loadCurrentAmplitude() {
+    setState(() {
+      currentAmplitude = storedCurrentAmplitude;
+    });
+  }
+
+  void exitCustom() {
+    loadCurrentAmplitude();
+    toggleStimulation();
+  }
+
+  void setRunning() {
+    setState((){
+      running = true;
+      notStarted = false;
+      paused = false;
+      clinicianMode = false;
+    });
+    startRampUp();
+  }
+
+  void setPaused() {
+    storeCurrentAmplitude();
+    setState((){
+      running = false;
+      notStarted = false;
+      paused = true;
+      clinicianMode = false;
+    });
+  }
+
+    void setNotStarted() {
+    setState((){
+      running = false;
+      notStarted = true;
+      paused = false;
+      clinicianMode = false;
+    });
+  }
+
+  void setClinician() {
+    if (clinicianMode) return;
+    storeCurrentAmplitude();
+    setState((){
+      storedCurrentAmplitude = currentAmplitude;
+      running = false;
+      notStarted = false;
+      paused = false;
+      clinicianMode = true;
     });
   }
 
   void adjustAmplitude(int amount) {
+    setClinician();
     setState(() {
       currentAmplitude += amount;
       if (currentAmplitude < 0) currentAmplitude = 0;
     });
   }
 
-  void navigateElectrode(int direction) {
-    if (isRunning) return; // Disabled when running
+  void incrementRamp() {
+    setState(() {
+      if (ramp < 3) {
+        ramp += 1;
+      }
+    });
+  }
 
+  void navigateElectrode(int direction) {
+    if (running) return; // Disabled when running
+    newElectrode();
     setState(() {
       currentElectrode += direction;
       if (currentElectrode < 1) currentElectrode = 1;
@@ -72,11 +282,20 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   void resetElectrode() {
-    // Implement reset functionality
+    setState(() {
+      ramp = 1;
+      newElectrode();
+    });
   }
 
   void discardLastSensation() {
-    // Implement discard functionality
+    setState(() {
+      if (meanSensationRecorded) {
+        meanSensationRecorded = false;
+      }else if (minSensationRecorded) {
+        minSensationRecorded = false;
+      }
+    });
   }
 
   void selectRamp(int newRamp) {
@@ -261,19 +480,30 @@ class _MappingScreenState extends State<MappingScreen>
                                       children: [
                                         // Start/Stop button
                                         ElevatedButton.icon(
-                                          onPressed: toggleStimulation,
+                                          onPressed: running ? toggleStimulation
+                                                             : paused ? toggleStimulation
+                                                                      : notStarted ? toggleStimulation
+                                                                                   : clinicianMode ? exitCustom
+                                                                                                   : exitCustom,
                                           icon: Icon(
-                                            isRunning
-                                                ? Icons.stop
-                                                : Icons.play_arrow,
+                                            running ? Icons.pause
+                                                    : paused ? Icons.play_arrow
+                                                            : notStarted ? Icons.play_arrow
+                                                                          : clinicianMode ? Icons.stop
+                                                                                          : Icons.stop,
                                             color: Colors.white,
                                           ),
                                           label:
-                                          Text(isRunning ? "Stop" : "Run"),
+                                          Text(running ? "Pause"
+                                                             : paused ? "Resume"
+                                                                      : notStarted ? "Run"
+                                                                                   : clinicianMode ? "Exit Custom"
+                                                                                                   : "Exit Custom"),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: isRunning
-                                                ? Colors.red
-                                                : Color(0xFF489F32),
+                                            backgroundColor: running ? Colors.orange
+                                                             : paused ? Color(0xFF489F32)
+                                                                      : notStarted ? Color(0xFF489F32)
+                                                                                   : Color.fromARGB(255, 255, 89, 0),
                                             foregroundColor: Colors.white,
                                             minimumSize: Size(
                                                 240, 50), // Increased width
@@ -282,8 +512,15 @@ class _MappingScreenState extends State<MappingScreen>
 
                                         // Add Sensation button
                                         ElevatedButton.icon(
-                                          onPressed: isRunning
-                                              ? () async {
+                                          onPressed: !notStarted
+                                              ? !minSensationRecorded ? 
+                                              () async {
+                                                setPaused();
+                                                recordMinSensation();
+                                              }
+                                              : !meanSensationRecorded ?
+                                              () async {
+                                            setPaused();
                                             final result = await showDialog(
                                               context: context,
                                               builder: (context) => AddSensationDialog(),
@@ -313,10 +550,11 @@ class _MappingScreenState extends State<MappingScreen>
                                               );
 
                                               if (success) {
+                                                recordMeanSensation();
                                                 // Show success message if needed
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                     SnackBar(
-                                                      content: Text('Sensation data saved successfully'),
+                                                      content: Text('Data saved successfully'),
                                                       backgroundColor: Colors.green,
                                                       duration: Duration(seconds: 2),
                                                     )
@@ -335,9 +573,17 @@ class _MappingScreenState extends State<MappingScreen>
                                               print("User skipped adding sensations.");
                                             }
                                           }
+                                          : () async {
+                                            setPaused();
+                                            recordMaxSensation();
+                                            incrementRamp();
+                                            navigateElectrode(1);
+                                          }
                                               : null,
                                           icon: Icon(Icons.add, color: Colors.white),
-                                          label: Text("Add sensation"),
+                                          label: Text(!minSensationRecorded ? "Min sensation"
+                                                                            : !meanSensationRecorded ? "Mean sensation"
+                                                                                                    : "Max sensation"),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Color(0xFFE18700),
                                             foregroundColor: Colors.white,
@@ -386,7 +632,7 @@ class _MappingScreenState extends State<MappingScreen>
                                         ),
                                       ),
                                     ),
-                                    if (isRunning) ...[
+                                    if (running) ...[
                                       SizedBox(width: 16),
                                       Container(
                                         width: 12,
@@ -507,14 +753,14 @@ class _MappingScreenState extends State<MappingScreen>
                                               show: true,
                                               drawHorizontalLine: true,
                                               drawVerticalLine: true,
-                                              horizontalInterval: 10,
-                                              verticalInterval: 3,
+                                              horizontalInterval: 100,
+                                              verticalInterval: 5,
                                             ),
                                             titlesData: FlTitlesData(
                                               leftTitles: AxisTitles(
                                                 sideTitles: SideTitles(
                                                   showTitles: true,
-                                                  interval: 10,
+                                                  interval: 100,
                                                   getTitlesWidget:
                                                       (value, meta) {
                                                     return Text(
@@ -536,7 +782,7 @@ class _MappingScreenState extends State<MappingScreen>
                                               bottomTitles: AxisTitles(
                                                 sideTitles: SideTitles(
                                                   showTitles: true,
-                                                  interval: 3,
+                                                  interval: 5,
                                                   getTitlesWidget:
                                                       (value, meta) {
                                                     return Text(
@@ -567,20 +813,16 @@ class _MappingScreenState extends State<MappingScreen>
                                             borderData:
                                             FlBorderData(show: false),
                                             lineBarsData: [
+                                              // Highlighted ramp-up area
                                               LineChartBarData(
-                                                spots: [
-                                                  FlSpot(0, 50),
-                                                  FlSpot(3, 60),
-                                                  FlSpot(6, 80),
-                                                  FlSpot(9, 90),
-                                                ],
+                                                spots: clinicianMode ? getSpots(storedCurrentAmplitude)
+                                                                     : getSpots(currentAmplitude),
                                                 isCurved: true,
                                                 color: Color(0xFF3D6673),
                                                 barWidth: 2,
                                                 dotData: FlDotData(
                                                   show: true,
-                                                  getDotPainter: (spot, percent,
-                                                      barData, index) {
+                                                  getDotPainter: (spot, percent, barData, index) {
                                                     return FlDotCirclePainter(
                                                       radius: 4,
                                                       color: Color(0xFF3D6673),
@@ -590,15 +832,44 @@ class _MappingScreenState extends State<MappingScreen>
                                                 ),
                                                 belowBarData: BarAreaData(
                                                   show: true,
-                                                  color: Color(0xFF3D6673)
-                                                      .withOpacity(0.2),
+                                                  color: Color(0xFF3D6673).withOpacity(0.5), // More emphasized shade
+                                                ),
+                                              ),
+
+                                              // Full line, lightly shaded
+                                              LineChartBarData(
+                                                spots: [
+                                                  FlSpot(0, 0),
+                                                  FlSpot(3.75, 50),
+                                                  FlSpot(5.25, 100),
+                                                  FlSpot(6.75, 150),
+                                                  FlSpot(11.25, 250),
+                                                  FlSpot(15, 400),
+                                                  FlSpot(22.5, 600)
+                                                ],
+                                                isCurved: true,
+                                                color: Color(0xFF3D6673),
+                                                barWidth: 2,
+                                                dotData: FlDotData(
+                                                  show: true,
+                                                  getDotPainter: (spot, percent, barData, index) {
+                                                    return FlDotCirclePainter(
+                                                      radius: 4,
+                                                      color: Color(0xFF3D6673),
+                                                      strokeWidth: 0,
+                                                    );
+                                                  },
+                                                ),
+                                                belowBarData: BarAreaData(
+                                                  show: true,
+                                                  color: Color(0xFF3D6673).withOpacity(0.2), // Less emphasized shade
                                                 ),
                                               ),
                                             ],
                                             minX: 0,
-                                            maxX: 9,
-                                            minY: 40,
-                                            maxY: 100,
+                                            maxX: 24,
+                                            minY: 0,
+                                            maxY: 700,
                                           ),
                                         ),
                                       ),
@@ -624,13 +895,13 @@ class _MappingScreenState extends State<MappingScreen>
                                         children: [
                                           // Left button
                                           Material(
-                                            color: isRunning
+                                            color: !notStarted
                                                 ? Colors.grey[300]
                                                 : Color(0xFFD9E5E7),
                                             borderRadius:
                                             BorderRadius.circular(4),
                                             child: InkWell(
-                                              onTap: isRunning
+                                              onTap: !notStarted
                                                   ? null
                                                   : () => navigateElectrode(-1),
                                               borderRadius:
@@ -640,7 +911,7 @@ class _MappingScreenState extends State<MappingScreen>
                                                 height: 40,
                                                 child: Icon(
                                                   Icons.chevron_left,
-                                                  color: isRunning
+                                                  color: !notStarted
                                                       ? Colors.grey
                                                       : Color(0xFF3D6673),
                                                 ),
@@ -676,13 +947,13 @@ class _MappingScreenState extends State<MappingScreen>
 
                                           // Right button
                                           Material(
-                                            color: isRunning
+                                            color: !notStarted
                                                 ? Colors.grey[300]
                                                 : Color(0xFFD9E5E7),
                                             borderRadius:
                                             BorderRadius.circular(4),
                                             child: InkWell(
-                                              onTap: isRunning
+                                              onTap: !notStarted
                                                   ? null
                                                   : () => navigateElectrode(1),
                                               borderRadius:
@@ -692,7 +963,7 @@ class _MappingScreenState extends State<MappingScreen>
                                                 height: 40,
                                                 child: Icon(
                                                   Icons.chevron_right,
-                                                  color: isRunning
+                                                  color: !notStarted
                                                       ? Colors.grey
                                                       : Color(0xFF3D6673),
                                                 ),
@@ -711,7 +982,23 @@ class _MappingScreenState extends State<MappingScreen>
                                       child: Row(
                                         mainAxisAlignment:
                                         MainAxisAlignment.center,
-                                        children: [
+                                        children: [OutlinedButton.icon(
+                                            onPressed: stopStimulation,
+                                            icon: Icon(Icons.stop),
+                                            label: Text("Stop"),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor:
+                                              Color.fromARGB(255, 255, 255, 255),
+                                              iconColor: Color.fromARGB(255, 255, 255, 255),
+                                              backgroundColor: Color.fromARGB(199, 255, 0, 0),
+                                              side: BorderSide(
+                                                  color: Color.fromARGB(0, 255, 255, 255)),
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 16, vertical: 12),
+                                            ),
+                                          ),
+
+                                          SizedBox(width: 16),
                                           // Reset electrode
                                           OutlinedButton.icon(
                                             onPressed: resetElectrode,
