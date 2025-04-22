@@ -1,17 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/bluetooth_provider.dart';
+import 'widget_tree.dart';
+
+import 'screens/bluetooth_off_page.dart';
+import 'screens/device_pairing_page.dart';
+import 'screens/bluetooth_page.dart';
 
 import 'screens/home_page.dart';
 import 'screens/sign_in_page.dart';
-import 'widget_tree.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => BluetoothProvider()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -96,6 +110,9 @@ class MyApp extends StatelessWidget {
         routes: {
           '/signinpage': (context) => SignInPage(),
           '/homepage': (context) => HomePage(key: homePageKey),
+          '/devicepairingpage': (context) => DevicePairingPage(),
+          '/bluetoothpage': (context) => BluetoothPage(),
+          '/bluetoothoffpage': (context) => BluetoothOffPage(),
         });
   }
 }

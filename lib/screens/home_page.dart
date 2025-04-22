@@ -7,6 +7,7 @@ import '../services/auth.dart';
 import 'bluetooth_page.dart';
 import 'dashboard_page.dart';
 import 'patient_page.dart';
+import 'device_pairing_page.dart';
 
 final GlobalKey<_HomePageState> homePageKey = GlobalKey<_HomePageState>();
 
@@ -31,7 +32,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     DashboardPage(),
     PatientsScreen(),
-    BluetoothPage(),
+    DevicePairingPage(),
   ];
 
   void _onItemTapped(int index) {

@@ -1,0 +1,2 @@
+C:/Users/jo3da/Desktop/classes/CS Project/sensy_clinician_app/android/app/.cxx/Debug/4z6o2m57/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/jo3da/Desktop/classes/CS Project/sensy_clinician_app/android/app/.cxx/Debug/4z6o2m57/armeabi-v7a/CMakeFiles/rebuild_cache.dir
