@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:io';
 
 import '../providers/bluetooth_provider.dart';
+import 'mapping_screen.dart';
 
 class BluetoothPage extends StatefulWidget {
   const BluetoothPage({super.key});

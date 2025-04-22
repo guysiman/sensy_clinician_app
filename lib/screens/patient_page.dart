@@ -4,6 +4,7 @@ import 'package:sensy_clinician_app/services/database.dart';
 import '../components/add_patient_dialog.dart';
 import '../components/pair_ipg_dialog.dart';
 import '../services/auth.dart';
+import 'mapping_screen.dart';
 
 class PatientsScreen extends StatefulWidget {
   const PatientsScreen({super.key});
@@ -135,11 +136,18 @@ class _PatientScreenState extends State<PatientsScreen> {
                     itemCount: patients.length,
                     itemBuilder: (context, index) {
                       final patient = patients[index];
+                      
+                      // For testing - set some patients as having IPGs
+                      // In a real app, this would come from the database
+                      bool hasIPG = index % 3 == 0; // Every third patient has an IPG
+                      bool mappingCompleted = index % 3 == 0 && index % 2 == 0; // Some patients with IPGs have completed mapping
+                      
                       return PatientCard(
                         patientId: patient['patientID'] as String,
                         age: patient['age'] as int,
                         painOrigin: patient['originOfPain'] as String,
-                        hasIPG: false,
+                        hasIPG: hasIPG,
+                        mappingCompleted: mappingCompleted,
                       );
                     },
                   ),
@@ -155,6 +163,7 @@ class PatientCard extends StatelessWidget {
   final int age;
   final String painOrigin;
   final bool hasIPG;
+  final bool mappingCompleted;
 
   const PatientCard({
     Key? key,
@@ -162,6 +171,7 @@ class PatientCard extends StatelessWidget {
     required this.age,
     required this.painOrigin,
     required this.hasIPG,
+    this.mappingCompleted = false,
   }) : super(key: key);
 
   @override
@@ -191,11 +201,26 @@ class PatientCard extends StatelessWidget {
               // Navigate back and change the tab
               homePageKey.currentState?.navigateToIPG();
             }
-          } else {
+          } 
+          // If the patient has an IPG but mapping is not completed, navigate to mapping screen
+          else if (hasIPG && !mappingCompleted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MappingScreen(
+                  patientId: patientId,
+                  ipgSerial: '83cne482j', // Mock data
+                  ipgFirmware: '2.0',     // Mock data
+                  ipgBattery: 89,         // Mock data
+                ),
+              ),
+            );
+          }
+          else {
             // Navigate to patient details page
             // For testing purposes:
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Patient already has an IPG paired')),
+              SnackBar(content: Text('Patient already has an IPG paired and mapping completed')),
             );
           }
         },
