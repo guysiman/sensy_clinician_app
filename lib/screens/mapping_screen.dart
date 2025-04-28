@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
@@ -56,6 +58,9 @@ class _MappingScreenState extends State<MappingScreen>
   double minSensationValue = 0.0;
   double meanSensationValue = 0.0;
   double maxSensationValue = 0.0;
+  double storedMinSensationValue = 0.0;
+  double storedMeanSensationValue = 0.0;
+  double storedMaxSensationValue = 0.0;
 
   Map<String, dynamic> sensationData = {
     'sensation': 'None',
@@ -130,7 +135,7 @@ class _MappingScreenState extends State<MappingScreen>
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Data saved successfully'),
+        content: Text('Ramp saved successfully'),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 2),
       ));
@@ -139,7 +144,7 @@ class _MappingScreenState extends State<MappingScreen>
     } else {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to save sensation data'),
+        content: Text('Failed to save ramp data'),
         backgroundColor: Colors.red,
         duration: Duration(seconds: 2),
       ));
@@ -297,8 +302,16 @@ class _MappingScreenState extends State<MappingScreen>
 
   void incrementRamp() {
     setState(() {
-      if (ramp < 3) {
-        ramp += 1;
+      if (ramp == 1) {
+        ramp = 2;
+      } else if (ramp == 2 &&
+              (storedMinSensationValue - minSensationValue).abs() >=
+                  minSensationValue * 0.15 ||
+          (storedMaxSensationValue - maxSensationValue).abs() >=
+              maxSensationValue * 0.15) {
+        ramp = 3;
+      } else {
+        navigateElectrode(1);
       }
     });
   }
@@ -592,8 +605,6 @@ class _MappingScreenState extends State<MappingScreen>
                                                               };
                                                             }
 
-                                                            // Save the data to Firebase
-
                                                             recordMeanSensation();
                                                             ScaffoldMessenger
                                                                     .of(context)
@@ -618,7 +629,6 @@ class _MappingScreenState extends State<MappingScreen>
                                                           recordMaxSensation();
                                                           recordResults();
                                                           incrementRamp();
-                                                          navigateElectrode(1);
                                                         }
                                               : null,
                                           icon: Icon(Icons.add,
