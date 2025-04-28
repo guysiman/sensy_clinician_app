@@ -165,9 +165,11 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   Future<void> recordResults() async {
-    storedMinSensationValue = minSensationValue;
-    storedMeanSensationValue = meanSensationValue;
-    storedMaxSensationValue = maxSensationValue;
+    if (ramp == 1) {
+      storedMinSensationValue = minSensationValue;
+      storedMeanSensationValue = meanSensationValue;
+      storedMaxSensationValue = maxSensationValue;
+    }
     bool success = await _databaseService.savePatientSensation(
       a_1: minSensationValue / 5,
       a_mean: meanSensationValue / 5,
@@ -199,9 +201,8 @@ class _MappingScreenState extends State<MappingScreen>
 
   void resetCurrentAmplitude() {
     setState(() {
-      if (ramp == 2) {
+      if (ramp != 1) {
         currentAmplitude = max(0.75 * storedMinSensationValue, 0);
-        print(storedMinSensationValue);
         storedCurrentAmplitude = currentAmplitude;
       }
     });
