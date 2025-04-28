@@ -42,7 +42,7 @@ class _MappingScreenState extends State<MappingScreen>
   final List<double> increments = [1.33, 3.33, 3.33, 2.22, 4, 2.67];
   final List<double> ampMarks = [50, 100, 150, 250, 400, 600];
   final Duration interval = Duration(milliseconds: 100);
-  
+
   Timer? timer;
   List<FlSpot> chartData = [FlSpot(0, 0)];
   int step = 0;
@@ -62,19 +62,20 @@ class _MappingScreenState extends State<MappingScreen>
     });
 
     timer = Timer.periodic(interval, (timer) {
-      if(!running) {
+      if (!running) {
         timer.cancel();
         return;
       }
       setState(() {
         double increment = 0.0;
-        for(int i=0; i < increments.length; i++) {
+        for (int i = 0; i < increments.length; i++) {
           if (currentAmplitude < ampMarks[i]) {
             increment = increments[i];
             break;
           }
         }
-        currentAmplitude = (currentAmplitude + increment).clamp(0, finalAmplitude);
+        currentAmplitude =
+            (currentAmplitude + increment).clamp(0, finalAmplitude);
         step++;
         chartData.add(FlSpot(getTime(currentAmplitude), currentAmplitude));
         if (currentAmplitude >= finalAmplitude) {
@@ -88,21 +89,21 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   List<FlSpot> getSpots(double amplitude) {
-    List <FlSpot> result = [];
+    List<FlSpot> result = [];
     result.add(FlSpot(0, 0));
-    if (amplitude > 50){
+    if (amplitude > 50) {
       result.add(FlSpot(3.75, 50));
     }
-    if (amplitude > 100){
+    if (amplitude > 100) {
       result.add(FlSpot(5.25, 100));
     }
-    if (amplitude > 150){
+    if (amplitude > 150) {
       result.add(FlSpot(6.75, 150));
     }
-    if (amplitude > 250){
+    if (amplitude > 250) {
       result.add(FlSpot(11.25, 250));
     }
-    if (amplitude > 400){
+    if (amplitude > 400) {
       result.add(FlSpot(15, 400));
     }
     result.add(FlSpot(getTime(amplitude), amplitude));
@@ -120,27 +121,22 @@ class _MappingScreenState extends State<MappingScreen>
   double getTime(double amplitude) {
     double time = 0.0;
     if (amplitude > 400) {
-      time = 15 + (amplitude - 400)/(26.6);
-    }
-    else if (amplitude > 250) {
+      time = 15 + (amplitude - 400) / (26.6);
+    } else if (amplitude > 250) {
       time = 11.25 + (amplitude - 250) / (40);
-    }
-    else if (amplitude > 150) {
+    } else if (amplitude > 150) {
       time = 6.75 + (amplitude - 150) / (22.2);
-    }
-    else if (amplitude > 100) {
+    } else if (amplitude > 100) {
       time = 5.25 + (amplitude - 100) / (33.3);
-    }
-    else if (amplitude > 50) {
+    } else if (amplitude > 50) {
       time = 3.75 + (amplitude - 50) / (33.3);
-    }
-    else {
+    } else {
       time = 0 + (amplitude) / (13.3);
     }
     return time;
   }
 
-   void stopStimulation() {
+  void stopStimulation() {
     timer?.cancel();
     setState(() {
       setNotStarted();
@@ -154,7 +150,7 @@ class _MappingScreenState extends State<MappingScreen>
   void recordMinSensation() {
     setState(() {
       minSensationValue = currentAmplitude;
-    minSensationRecorded = true;
+      minSensationRecorded = true;
     });
   }
 
@@ -165,11 +161,11 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   void recordMaxSensation() {
-    setState((){
+    setState(() {
       maxSensationValue = currentAmplitude;
     });
   }
-  
+
   @override
   void initState() {
     super.initState();
@@ -184,13 +180,13 @@ class _MappingScreenState extends State<MappingScreen>
 
   void toggleStimulation() {
     setState(() {
-      if (notStarted){
+      if (notStarted) {
         setRunning();
-      }else if(running){
+      } else if (running) {
         setPaused();
-      }else if(paused){
+      } else if (paused) {
         setRunning();
-      }else if(clinicianMode) {
+      } else if (clinicianMode) {
         setPaused();
       }
     });
@@ -214,7 +210,7 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   void setRunning() {
-    setState((){
+    setState(() {
       running = true;
       notStarted = false;
       paused = false;
@@ -225,7 +221,7 @@ class _MappingScreenState extends State<MappingScreen>
 
   void setPaused() {
     storeCurrentAmplitude();
-    setState((){
+    setState(() {
       running = false;
       notStarted = false;
       paused = true;
@@ -233,8 +229,8 @@ class _MappingScreenState extends State<MappingScreen>
     });
   }
 
-    void setNotStarted() {
-    setState((){
+  void setNotStarted() {
+    setState(() {
       running = false;
       notStarted = true;
       paused = false;
@@ -245,7 +241,7 @@ class _MappingScreenState extends State<MappingScreen>
   void setClinician() {
     if (clinicianMode) return;
     storeCurrentAmplitude();
-    setState((){
+    setState(() {
       storedCurrentAmplitude = currentAmplitude;
       running = false;
       notStarted = false;
@@ -292,7 +288,7 @@ class _MappingScreenState extends State<MappingScreen>
     setState(() {
       if (meanSensationRecorded) {
         meanSensationRecorded = false;
-      }else if (minSensationRecorded) {
+      } else if (minSensationRecorded) {
         minSensationRecorded = false;
       }
     });
@@ -432,7 +428,7 @@ class _MappingScreenState extends State<MappingScreen>
                 indicatorColor: Color(0xFF3D6673),
                 indicatorWeight: 3,
                 dividerColor:
-                Colors.transparent, // Remove the permanent grey line
+                    Colors.transparent, // Remove the permanent grey line
                 tabs: [
                   Tab(text: "Mapping"),
                   Tab(text: "Mapped"),
@@ -469,7 +465,7 @@ class _MappingScreenState extends State<MappingScreen>
                               // Control buttons row
                               Row(
                                 mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Left side controls - centered in left half
                                   Expanded(
@@ -480,30 +476,45 @@ class _MappingScreenState extends State<MappingScreen>
                                       children: [
                                         // Start/Stop button
                                         ElevatedButton.icon(
-                                          onPressed: running ? toggleStimulation
-                                                             : paused ? toggleStimulation
-                                                                      : notStarted ? toggleStimulation
-                                                                                   : clinicianMode ? exitCustom
-                                                                                                   : exitCustom,
+                                          onPressed: running
+                                              ? toggleStimulation
+                                              : paused
+                                                  ? toggleStimulation
+                                                  : notStarted
+                                                      ? toggleStimulation
+                                                      : clinicianMode
+                                                          ? exitCustom
+                                                          : exitCustom,
                                           icon: Icon(
-                                            running ? Icons.pause
-                                                    : paused ? Icons.play_arrow
-                                                            : notStarted ? Icons.play_arrow
-                                                                          : clinicianMode ? Icons.stop
-                                                                                          : Icons.stop,
+                                            running
+                                                ? Icons.pause
+                                                : paused
+                                                    ? Icons.play_arrow
+                                                    : notStarted
+                                                        ? Icons.play_arrow
+                                                        : clinicianMode
+                                                            ? Icons.stop
+                                                            : Icons.stop,
                                             color: Colors.white,
                                           ),
-                                          label:
-                                          Text(running ? "Pause"
-                                                             : paused ? "Resume"
-                                                                      : notStarted ? "Run"
-                                                                                   : clinicianMode ? "Exit Custom"
-                                                                                                   : "Exit Custom"),
+                                          label: Text(running
+                                              ? "Pause"
+                                              : paused
+                                                  ? "Resume"
+                                                  : notStarted
+                                                      ? "Run"
+                                                      : clinicianMode
+                                                          ? "Exit Custom"
+                                                          : "Exit Custom"),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: running ? Colors.orange
-                                                             : paused ? Color(0xFF489F32)
-                                                                      : notStarted ? Color(0xFF489F32)
-                                                                                   : Color.fromARGB(255, 255, 89, 0),
+                                            backgroundColor: running
+                                                ? Colors.orange
+                                                : paused
+                                                    ? Color(0xFF489F32)
+                                                    : notStarted
+                                                        ? Color(0xFF489F32)
+                                                        : Color.fromARGB(
+                                                            255, 255, 89, 0),
                                             foregroundColor: Colors.white,
                                             minimumSize: Size(
                                                 240, 50), // Increased width
@@ -513,81 +524,119 @@ class _MappingScreenState extends State<MappingScreen>
                                         // Add Sensation button
                                         ElevatedButton.icon(
                                           onPressed: !notStarted
-                                              ? !minSensationRecorded ? 
-                                              () async {
-                                                setPaused();
-                                                recordMinSensation();
-                                              }
-                                              : !meanSensationRecorded ?
-                                              () async {
-                                            setPaused();
-                                            final result = await showDialog(
-                                              context: context,
-                                              builder: (context) => AddSensationDialog(),
-                                            );
+                                              ? !minSensationRecorded
+                                                  ? () async {
+                                                      setPaused();
+                                                      recordMinSensation();
+                                                    }
+                                                  : !meanSensationRecorded
+                                                      ? () async {
+                                                          setPaused();
+                                                          final result =
+                                                              await showDialog(
+                                                            context: context,
+                                                            builder: (context) =>
+                                                                AddSensationDialog(),
+                                                          );
 
-                                            if (result != null) {
-                                              // Extract data from result
-                                              Map<String, dynamic> sensationData;
+                                                          if (result != null) {
+                                                            // Extract data from result
+                                                            Map<String, dynamic>
+                                                                sensationData;
 
-                                              if (result is Map<String, dynamic>) {
-                                                sensationData = result;
-                                              } else {
-                                                // Handle the case where only sensation string is returned (backward compatibility)
-                                                sensationData = {
-                                                  'sensation': result,
-                                                  'areas': [],
-                                                };
-                                              }
+                                                            if (result is Map<
+                                                                String,
+                                                                dynamic>) {
+                                                              sensationData =
+                                                                  result;
+                                                            } else {
+                                                              // Handle the case where only sensation string is returned (backward compatibility)
+                                                              sensationData = {
+                                                                'sensation':
+                                                                    result,
+                                                                'areas': [],
+                                                              };
+                                                            }
 
-                                              // Save the data to Firebase
-                                              bool success = await _databaseService.savePatientSensation(
-                                                patientID: widget.patientId,
-                                                sensation: sensationData['sensation'],
-                                                footAreas: sensationData['areas'],
-                                                electrodeID: currentElectrode.toString(),
-                                                amplitude: currentAmplitude.toDouble(),
-                                              );
+                                                            // Save the data to Firebase
+                                                            bool success =
+                                                                await _databaseService
+                                                                    .savePatientSensation(
+                                                              patientID: widget
+                                                                  .patientId,
+                                                              sensation:
+                                                                  sensationData[
+                                                                      'sensation'],
+                                                              footAreas:
+                                                                  sensationData[
+                                                                      'areas'],
+                                                              electrodeID:
+                                                                  currentElectrode
+                                                                      .toString(),
+                                                              amplitude:
+                                                                  currentAmplitude
+                                                                      .toDouble(),
+                                                            );
 
-                                              if (success) {
-                                                recordMeanSensation();
-                                                // Show success message if needed
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text('Data saved successfully'),
-                                                      backgroundColor: Colors.green,
-                                                      duration: Duration(seconds: 2),
-                                                    )
-                                                );
-                                              } else {
-                                                // Show error message
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text('Failed to save sensation data'),
-                                                      backgroundColor: Colors.red,
-                                                      duration: Duration(seconds: 2),
-                                                    )
-                                                );
-                                              }
-                                            } else {
-                                              print("User skipped adding sensations.");
-                                            }
-                                          }
-                                          : () async {
-                                            setPaused();
-                                            recordMaxSensation();
-                                            incrementRamp();
-                                            navigateElectrode(1);
-                                          }
+                                                            if (success) {
+                                                              recordMeanSensation();
+                                                              // Show success message if needed
+                                                              ScaffoldMessenger
+                                                                      .of(
+                                                                          context)
+                                                                  .showSnackBar(
+                                                                      SnackBar(
+                                                                content: Text(
+                                                                    'Data saved successfully'),
+                                                                backgroundColor:
+                                                                    Colors
+                                                                        .green,
+                                                                duration:
+                                                                    Duration(
+                                                                        seconds:
+                                                                            2),
+                                                              ));
+                                                            } else {
+                                                              // Show error message
+                                                              ScaffoldMessenger
+                                                                      .of(
+                                                                          context)
+                                                                  .showSnackBar(
+                                                                      SnackBar(
+                                                                content: Text(
+                                                                    'Failed to save sensation data'),
+                                                                backgroundColor:
+                                                                    Colors.red,
+                                                                duration:
+                                                                    Duration(
+                                                                        seconds:
+                                                                            2),
+                                                              ));
+                                                            }
+                                                          } else {
+                                                            print(
+                                                                "User skipped adding sensations.");
+                                                          }
+                                                        }
+                                                      : () async {
+                                                          setPaused();
+                                                          recordMaxSensation();
+                                                          incrementRamp();
+                                                          navigateElectrode(1);
+                                                        }
                                               : null,
-                                          icon: Icon(Icons.add, color: Colors.white),
-                                          label: Text(!minSensationRecorded ? "Min sensation"
-                                                                            : !meanSensationRecorded ? "Mean sensation"
-                                                                                                    : "Max sensation"),
+                                          icon: Icon(Icons.add,
+                                              color: Colors.white),
+                                          label: Text(!minSensationRecorded
+                                              ? "Min sensation"
+                                              : !meanSensationRecorded
+                                                  ? "Mean sensation"
+                                                  : "Max sensation"),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Color(0xFFE18700),
+                                            backgroundColor: Color(0xFF3D6673),
                                             foregroundColor: Colors.white,
-                                            minimumSize: Size(240, 50), // Increased width
+                                            minimumSize: Size(
+                                                240, 50), // Increased width
                                           ),
                                         ),
                                       ],
@@ -600,7 +649,7 @@ class _MappingScreenState extends State<MappingScreen>
                                     child: Center(
                                       child: Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                            MainAxisAlignment.center,
                                         children: [
                                           _buildTimeButton(1),
                                           SizedBox(width: 16),
@@ -665,30 +714,26 @@ class _MappingScreenState extends State<MappingScreen>
                                     flex: 1,
                                     child: Column(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                          MainAxisAlignment.center,
                                       crossAxisAlignment:
-                                      CrossAxisAlignment.center,
+                                          CrossAxisAlignment.center,
                                       children: [
                                         // Current amplitude display - increased size
                                         Container(
-                                          width: 120, // Increased from 80
-                                          height: 70, // Reduced from 80
-                                          padding: EdgeInsets.symmetric(
-                                              vertical: 8,
-                                              horizontal:
-                                              20), // Reduced padding
+                                          width: 120,
+                                          height: 70,
                                           decoration: BoxDecoration(
                                             border: Border.all(
                                                 color: Colors.grey[400]!),
                                             borderRadius:
-                                            BorderRadius.circular(4),
+                                                BorderRadius.circular(4),
                                           ),
                                           child: Center(
                                             child: Text(
-                                              "$currentAmplitude",
+                                              "${currentAmplitude.toInt()}",
                                               style: TextStyle(
                                                 fontSize:
-                                                36, // Increased from 24
+                                                    36, // Increased from 24
                                                 fontWeight: FontWeight.bold,
                                                 color: Color(0xFF3D6673),
                                               ),
@@ -700,7 +745,7 @@ class _MappingScreenState extends State<MappingScreen>
                                             style: TextStyle(
                                                 color: Colors.grey[600],
                                                 fontSize:
-                                                14)), // Increased font size
+                                                    14)), // Increased font size
 
                                         SizedBox(height: 20), // Reduced from 26
 
@@ -712,23 +757,27 @@ class _MappingScreenState extends State<MappingScreen>
                                             // Big decrement
                                             _buildAmplitudeButton(
                                                 Icons.remove,
-                                                    () => adjustAmplitude(-10),
-                                                "[10 μA]"),
+                                                () => adjustAmplitude(-10),
+                                                "[10 μA]",
+                                                true),
                                             // Small decrement
                                             _buildAmplitudeButton(
                                                 Icons.remove,
-                                                    () => adjustAmplitude(-2),
-                                                "[2 μA]"),
+                                                () => adjustAmplitude(-2),
+                                                "[2 μA]",
+                                                true),
                                             // Small increment
                                             _buildAmplitudeButton(
                                                 Icons.add,
-                                                    () => adjustAmplitude(2),
-                                                "[2 μA]"),
+                                                () => adjustAmplitude(2),
+                                                "[2 μA]",
+                                                false),
                                             // Big increment
                                             _buildAmplitudeButton(
                                                 Icons.add,
-                                                    () => adjustAmplitude(10),
-                                                "[10 μA]"),
+                                                () => adjustAmplitude(10),
+                                                "[10 μA]",
+                                                false),
                                           ],
                                         ),
                                       ],
@@ -776,7 +825,7 @@ class _MappingScreenState extends State<MappingScreen>
                                                 axisNameWidget: Text(
                                                   'Amplitude',
                                                   style:
-                                                  TextStyle(fontSize: 10),
+                                                      TextStyle(fontSize: 10),
                                                 ),
                                               ),
                                               bottomTitles: AxisTitles(
@@ -798,7 +847,7 @@ class _MappingScreenState extends State<MappingScreen>
                                                 axisNameWidget: Text(
                                                   'Time',
                                                   style:
-                                                  TextStyle(fontSize: 10),
+                                                      TextStyle(fontSize: 10),
                                                 ),
                                               ),
                                               rightTitles: AxisTitles(
@@ -811,18 +860,22 @@ class _MappingScreenState extends State<MappingScreen>
                                               ),
                                             ),
                                             borderData:
-                                            FlBorderData(show: false),
+                                                FlBorderData(show: false),
                                             lineBarsData: [
                                               // Highlighted ramp-up area
                                               LineChartBarData(
-                                                spots: clinicianMode ? getSpots(storedCurrentAmplitude)
-                                                                     : getSpots(currentAmplitude),
+                                                spots: clinicianMode
+                                                    ? getSpots(
+                                                        storedCurrentAmplitude)
+                                                    : getSpots(
+                                                        currentAmplitude),
                                                 isCurved: true,
                                                 color: Color(0xFF3D6673),
                                                 barWidth: 2,
                                                 dotData: FlDotData(
                                                   show: true,
-                                                  getDotPainter: (spot, percent, barData, index) {
+                                                  getDotPainter: (spot, percent,
+                                                      barData, index) {
                                                     return FlDotCirclePainter(
                                                       radius: 4,
                                                       color: Color(0xFF3D6673),
@@ -832,7 +885,9 @@ class _MappingScreenState extends State<MappingScreen>
                                                 ),
                                                 belowBarData: BarAreaData(
                                                   show: true,
-                                                  color: Color(0xFF3D6673).withOpacity(0.5), // More emphasized shade
+                                                  color: Color(0xFF3D6673)
+                                                      .withOpacity(
+                                                          0.5), // More emphasized shade
                                                 ),
                                               ),
 
@@ -852,7 +907,8 @@ class _MappingScreenState extends State<MappingScreen>
                                                 barWidth: 2,
                                                 dotData: FlDotData(
                                                   show: true,
-                                                  getDotPainter: (spot, percent, barData, index) {
+                                                  getDotPainter: (spot, percent,
+                                                      barData, index) {
                                                     return FlDotCirclePainter(
                                                       radius: 4,
                                                       color: Color(0xFF3D6673),
@@ -862,7 +918,9 @@ class _MappingScreenState extends State<MappingScreen>
                                                 ),
                                                 belowBarData: BarAreaData(
                                                   show: true,
-                                                  color: Color(0xFF3D6673).withOpacity(0.2), // Less emphasized shade
+                                                  color: Color(0xFF3D6673)
+                                                      .withOpacity(
+                                                          0.2), // Less emphasized shade
                                                 ),
                                               ),
                                             ],
@@ -883,7 +941,7 @@ class _MappingScreenState extends State<MappingScreen>
                               // Electrode navigation
                               Row(
                                 mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Left/Right electrode navigation - centered within its space
                                   Expanded(
@@ -891,7 +949,7 @@ class _MappingScreenState extends State<MappingScreen>
                                     child: Center(
                                       child: Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                            MainAxisAlignment.center,
                                         children: [
                                           // Left button
                                           Material(
@@ -899,13 +957,13 @@ class _MappingScreenState extends State<MappingScreen>
                                                 ? Colors.grey[300]
                                                 : Color(0xFFD9E5E7),
                                             borderRadius:
-                                            BorderRadius.circular(4),
+                                                BorderRadius.circular(4),
                                             child: InkWell(
                                               onTap: !notStarted
                                                   ? null
                                                   : () => navigateElectrode(-1),
                                               borderRadius:
-                                              BorderRadius.circular(4),
+                                                  BorderRadius.circular(4),
                                               child: Container(
                                                 width: 40,
                                                 height: 40,
@@ -931,7 +989,7 @@ class _MappingScreenState extends State<MappingScreen>
                                                 border: Border.all(
                                                     color: Colors.grey[300]!),
                                                 borderRadius:
-                                                BorderRadius.circular(4),
+                                                    BorderRadius.circular(4),
                                               ),
                                               child: Center(
                                                 child: Text(
@@ -951,13 +1009,13 @@ class _MappingScreenState extends State<MappingScreen>
                                                 ? Colors.grey[300]
                                                 : Color(0xFFD9E5E7),
                                             borderRadius:
-                                            BorderRadius.circular(4),
+                                                BorderRadius.circular(4),
                                             child: InkWell(
                                               onTap: !notStarted
                                                   ? null
                                                   : () => navigateElectrode(1),
                                               borderRadius:
-                                              BorderRadius.circular(4),
+                                                  BorderRadius.circular(4),
                                               child: Container(
                                                 width: 40,
                                                 height: 40,
@@ -981,18 +1039,22 @@ class _MappingScreenState extends State<MappingScreen>
                                     child: Center(
                                       child: Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                        children: [OutlinedButton.icon(
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          OutlinedButton.icon(
                                             onPressed: stopStimulation,
                                             icon: Icon(Icons.stop),
                                             label: Text("Stop"),
                                             style: OutlinedButton.styleFrom(
-                                              foregroundColor:
-                                              Color.fromARGB(255, 255, 255, 255),
-                                              iconColor: Color.fromARGB(255, 255, 255, 255),
-                                              backgroundColor: Color.fromARGB(199, 255, 0, 0),
+                                              foregroundColor: Color.fromARGB(
+                                                  255, 255, 255, 255),
+                                              iconColor: Color.fromARGB(
+                                                  255, 255, 255, 255),
+                                              backgroundColor: Color.fromARGB(
+                                                  199, 255, 0, 0),
                                               side: BorderSide(
-                                                  color: Color.fromARGB(0, 255, 255, 255)),
+                                                  color: Color.fromARGB(
+                                                      0, 255, 255, 255)),
                                               padding: EdgeInsets.symmetric(
                                                   horizontal: 16, vertical: 12),
                                             ),
@@ -1006,7 +1068,7 @@ class _MappingScreenState extends State<MappingScreen>
                                             label: Text("Reset electrode"),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor:
-                                              Color(0xFF3D6673),
+                                                  Color(0xFF3D6673),
                                               side: BorderSide(
                                                   color: Color(0xFF3D6673)),
                                               padding: EdgeInsets.symmetric(
@@ -1021,10 +1083,10 @@ class _MappingScreenState extends State<MappingScreen>
                                             onPressed: discardLastSensation,
                                             icon: Icon(Icons.delete_outline),
                                             label:
-                                            Text("Discard last sensation"),
+                                                Text("Discard last sensation"),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor:
-                                              Color(0xFF3D6673),
+                                                  Color(0xFF3D6673),
                                               side: BorderSide(
                                                   color: Color(0xFF3D6673)),
                                               padding: EdgeInsets.symmetric(
@@ -1059,7 +1121,7 @@ class _MappingScreenState extends State<MappingScreen>
                                   ),
                                   Text(widget.ipgSerial,
                                       style:
-                                      TextStyle(color: Colors.grey[700])),
+                                          TextStyle(color: Colors.grey[700])),
                                   SizedBox(width: 24),
                                   Text(
                                     "IPG FW version: ",
@@ -1069,7 +1131,7 @@ class _MappingScreenState extends State<MappingScreen>
                                   ),
                                   Text(widget.ipgFirmware,
                                       style:
-                                      TextStyle(color: Colors.grey[700])),
+                                          TextStyle(color: Colors.grey[700])),
                                   SizedBox(width: 24),
                                   Text(
                                     "IPG battery status: ",
@@ -1079,7 +1141,7 @@ class _MappingScreenState extends State<MappingScreen>
                                   ),
                                   Text("${widget.ipgBattery.toInt()}%",
                                       style:
-                                      TextStyle(color: Colors.grey[700])),
+                                          TextStyle(color: Colors.grey[700])),
                                 ],
                               ),
                             ),
@@ -1087,7 +1149,7 @@ class _MappingScreenState extends State<MappingScreen>
                             // Finish button
                             ElevatedButton(
                               onPressed:
-                              null, // Disabled until mapping is completed
+                                  null, // Disabled until mapping is completed
                               child: Text("Finish"),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Color(0xFF3D6673),
@@ -1152,14 +1214,16 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   Widget _buildAmplitudeButton(
-      IconData icon, VoidCallback onPressed, String label) {
+      IconData icon, VoidCallback onPressed, String label, bool isDecrement) {
     // Check if this is a big amplitude change button (10μA)
     final bool isBigChange = label.contains("10");
 
     return Column(
       children: [
         Material(
-          color: Color(0xFF3D6673),
+          color: isDecrement && currentAmplitude == 0
+              ? Color(0xFF3D6673).withOpacity(0.25)
+              : Color(0xFF3D6673),
           borderRadius: BorderRadius.circular(4),
           child: InkWell(
             onTap: onPressed,
@@ -1176,7 +1240,7 @@ class _MappingScreenState extends State<MappingScreen>
                   size: isBigChange
                       ? 42
                       : 36 // Bigger icon for big amplitude change
-              ),
+                  ),
             ),
           ),
         ),
