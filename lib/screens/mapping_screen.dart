@@ -55,6 +55,9 @@ class _MappingScreenState extends State<MappingScreen>
 
   bool minSensationRecorded = false;
   bool meanSensationRecorded = false;
+  double storedMinSensationValue = 0.0;
+  double storedMeanSensationValue = 0.0;
+  double storedMaxSensationValue = 0.0;
   double minSensationValue = 0.0;
   double meanSensationValue = 0.0;
   double maxSensationValue = 0.0;
@@ -77,25 +80,57 @@ class _MappingScreenState extends State<MappingScreen>
         timer.cancel();
         return;
       }
-      setState(() {
-        double increment = 0.0;
-        for (int i = 0; i < increments.length; i++) {
-          if (currentAmplitude < ampMarks[i]) {
-            increment = increments[i];
-            break;
+      if (ramp == 1) {
+        setState(() {
+          double increment = 0.0;
+          for (int i = 0; i < increments.length; i++) {
+            if (currentAmplitude < ampMarks[i]) {
+              increment = increments[i];
+              break;
+            }
           }
+          currentAmplitude =
+              (currentAmplitude + increment).clamp(0, finalAmplitude);
+          step++;
+          chartData.add(FlSpot(getTime(currentAmplitude), currentAmplitude));
+          if (currentAmplitude >= finalAmplitude) {
+            recordMaxSensation();
+            resetElectrode();
+            incrementRamp();
+            timer.cancel();
+          }
+        });
+      } else {
+        double rampStart = min(0.75 * storedMinSensationValue, 0);
+        double rampEnd = min(1.25 * storedMaxSensationValue, 600);
+        double rampDuration = 1.0;
+        if (rampEnd - rampStart < 100) {
+          rampDuration = 5.25;
+        } else if (rampEnd - rampStart < 200) {
+          rampDuration = 11.25;
+        } else if (rampEnd - rampStart < 400) {
+          rampDuration = 15.75;
+        } else {
+          rampDuration = 22.5;
         }
-        currentAmplitude =
-            (currentAmplitude + increment).clamp(0, finalAmplitude);
-        step++;
-        chartData.add(FlSpot(getTime(currentAmplitude), currentAmplitude));
-        if (currentAmplitude >= finalAmplitude) {
-          recordMaxSensation();
-          resetElectrode();
-          incrementRamp();
-          timer.cancel();
-        }
-      });
+        setState(() {
+          double increment = (rampEnd - rampStart) / rampDuration;
+          currentAmplitude =
+              (currentAmplitude + increment).clamp(0, finalAmplitude);
+          step++;
+          chartData.add(FlSpot(
+              (currentAmplitude - rampStart) /
+                  (rampEnd - rampStart) *
+                  (rampDuration),
+              currentAmplitude));
+          if (currentAmplitude >= rampEnd) {
+            recordMaxSensation();
+            resetElectrode();
+            incrementRamp();
+            timer.cancel();
+          }
+        });
+      }
     });
   }
 
@@ -123,9 +158,9 @@ class _MappingScreenState extends State<MappingScreen>
 
   Future<void> recordResults() async {
     bool success = await _databaseService.savePatientSensation(
-      a_1: minSensationValue,
-      a_mean: meanSensationValue,
-      a_2: maxSensationValue,
+      a_1: minSensationValue / 5,
+      a_mean: meanSensationValue / 5,
+      a_2: maxSensationValue / 5,
       patientID: widget.patientId,
       sensation: sensationData['sensation'],
       footAreas: sensationData['areas'],
@@ -134,6 +169,9 @@ class _MappingScreenState extends State<MappingScreen>
     );
 
     if (success) {
+      storedMinSensationValue = minSensationValue;
+      storedMeanSensationValue = meanSensationValue;
+      storedMaxSensationValue = maxSensationValue;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Ramp saved successfully'),
         backgroundColor: Colors.green,
