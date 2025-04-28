@@ -61,9 +61,6 @@ class _MappingScreenState extends State<MappingScreen>
   double minSensationValue = 0.0;
   double meanSensationValue = 0.0;
   double maxSensationValue = 0.0;
-  double storedMinSensationValue = 0.0;
-  double storedMeanSensationValue = 0.0;
-  double storedMaxSensationValue = 0.0;
 
   Map<String, dynamic> sensationData = {
     'sensation': 'None',
@@ -94,14 +91,16 @@ class _MappingScreenState extends State<MappingScreen>
           step++;
           chartData.add(FlSpot(getTime(currentAmplitude), currentAmplitude));
           if (currentAmplitude >= finalAmplitude) {
+            setPaused();
             recordMaxSensation();
-            resetElectrode();
+            recordResults();
+            stopStimulation();
             incrementRamp();
             timer.cancel();
           }
         });
       } else {
-        double rampStart = min(0.75 * storedMinSensationValue, 0);
+        double rampStart = max(0.75 * storedMinSensationValue, 0);
         double rampEnd = min(1.25 * storedMaxSensationValue, 600);
         double rampDuration = 1.0;
         if (rampEnd - rampStart < 100) {
@@ -114,7 +113,7 @@ class _MappingScreenState extends State<MappingScreen>
           rampDuration = 22.5;
         }
         setState(() {
-          double increment = (rampEnd - rampStart) / rampDuration;
+          double increment = (rampEnd - rampStart) / rampDuration * 0.1;
           currentAmplitude =
               (currentAmplitude + increment).clamp(0, finalAmplitude);
           step++;
@@ -124,8 +123,10 @@ class _MappingScreenState extends State<MappingScreen>
                   (rampDuration),
               currentAmplitude));
           if (currentAmplitude >= rampEnd) {
+            setPaused();
             recordMaxSensation();
-            resetElectrode();
+            recordResults();
+            stopStimulation();
             incrementRamp();
             timer.cancel();
           }
@@ -157,6 +158,9 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   Future<void> recordResults() async {
+    storedMinSensationValue = minSensationValue;
+    storedMeanSensationValue = meanSensationValue;
+    storedMaxSensationValue = maxSensationValue;
     bool success = await _databaseService.savePatientSensation(
       a_1: minSensationValue / 5,
       a_mean: meanSensationValue / 5,
@@ -169,9 +173,6 @@ class _MappingScreenState extends State<MappingScreen>
     );
 
     if (success) {
-      storedMinSensationValue = minSensationValue;
-      storedMeanSensationValue = meanSensationValue;
-      storedMaxSensationValue = maxSensationValue;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Ramp saved successfully'),
         backgroundColor: Colors.green,
@@ -189,11 +190,22 @@ class _MappingScreenState extends State<MappingScreen>
     }
   }
 
+  void resetCurrentAmplitude() {
+    setState(() {
+      if (ramp == 2) {
+        currentAmplitude = max(0.75 * storedMinSensationValue, 0);
+        print(storedMinSensationValue);
+        storedCurrentAmplitude = currentAmplitude;
+      }
+    });
+  }
+
   void newElectrode() {
     stopStimulation();
     setState(() {
       minSensationRecorded = false;
       meanSensationRecorded = false;
+      ramp = 1;
     });
   }
 
@@ -340,8 +352,11 @@ class _MappingScreenState extends State<MappingScreen>
 
   void incrementRamp() {
     setState(() {
+      minSensationRecorded = false;
+      meanSensationRecorded = false;
       if (ramp == 1) {
         ramp = 2;
+        resetCurrentAmplitude();
       } else if (ramp == 2 &&
               (storedMinSensationValue - minSensationValue).abs() >=
                   minSensationValue * 0.15 ||
@@ -666,6 +681,7 @@ class _MappingScreenState extends State<MappingScreen>
                                                           setPaused();
                                                           recordMaxSensation();
                                                           recordResults();
+                                                          stopStimulation();
                                                           incrementRamp();
                                                         }
                                               : null,
