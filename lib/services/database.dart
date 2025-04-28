@@ -4,16 +4,16 @@ import 'package:intl/intl.dart';
 class DatabaseService {
   // collection reference
   final CollectionReference clincianData =
-  FirebaseFirestore.instance.collection('clinician_data');
+      FirebaseFirestore.instance.collection('clinician_data');
 
   final CollectionReference clinicians =
-  FirebaseFirestore.instance.collection('clinicians');
+      FirebaseFirestore.instance.collection('clinicians');
 
   Future<String?> getClinicianIDByEmail(String email) async {
     try {
       // Query Firestore to find a document where 'email' matches
       QuerySnapshot snapshot =
-      await clincianData.where('email', isEqualTo: email).get();
+          await clincianData.where('email', isEqualTo: email).get();
 
       if (snapshot.docs.isEmpty) {
         return null; // No user found with the given email
@@ -30,7 +30,7 @@ class DatabaseService {
       String clinicianID) async {
     try {
       CollectionReference patientsRef =
-      clinicians.doc(clinicianID).collection('patients');
+          clinicians.doc(clinicianID).collection('patients');
       QuerySnapshot snapshot = await patientsRef.get();
       if (snapshot.docs.isEmpty) {
         return []; // No patients found
@@ -55,16 +55,18 @@ class DatabaseService {
 
   // Method to save sensation data with date-based document IDs
   Future<bool> savePatientSensation({
+    required double a_1,
+    required double a_mean,
+    required double a_2,
     required String patientID,
     required String sensation,
     required List<String> footAreas,
+    required int ramp,
     String? electrodeID,
-    double? amplitude,
   }) async {
     try {
       // Reference to the sensations collection under the patient's document
-      CollectionReference sensationsCollection =
-      FirebaseFirestore.instance
+      CollectionReference sensationsCollection = FirebaseFirestore.instance
           .collection('patient_mapping')
           .doc(patientID)
           .collection('sensations');
@@ -74,12 +76,15 @@ class DatabaseService {
       String dateId = DateFormat('yyyy-MM-dd_HH-mm-ss').format(now);
 
       // Create the document with the date-based ID
-      await sensationsCollection.doc(dateId).set({
-        'sensation': sensation,
-        'footAreas': footAreas,
-        'electrodeID': electrodeID ?? 'unknown',
-        'amplitude': amplitude ?? 0.0,
-        'timestamp': FieldValue.serverTimestamp(),
+      await sensationsCollection.doc('electrode{$electrodeID}').set({
+        'ramp{$ramp}': {
+          'a_1': a_1,
+          'a_mean': a_mean,
+          'a_2': a_2,
+          'sensation': sensation,
+          'footAreas': footAreas,
+          'timestamp': FieldValue.serverTimestamp(),
+        }
       });
 
       // Also update the main patient document with some basic info

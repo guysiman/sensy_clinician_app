@@ -53,8 +53,14 @@ class _MappingScreenState extends State<MappingScreen>
 
   bool minSensationRecorded = false;
   bool meanSensationRecorded = false;
-  double? minSensationValue;
-  double? maxSensationValue;
+  double minSensationValue = 0.0;
+  double meanSensationValue = 0.0;
+  double maxSensationValue = 0.0;
+
+  Map<String, dynamic> sensationData = {
+    'sensation': 'None',
+    'areas': [],
+  };
 
   void startRampUp() {
     setState(() {
@@ -110,6 +116,36 @@ class _MappingScreenState extends State<MappingScreen>
     return result;
   }
 
+  Future<void> recordResults() async {
+    bool success = await _databaseService.savePatientSensation(
+      a_1: minSensationValue,
+      a_mean: meanSensationValue,
+      a_2: maxSensationValue,
+      patientID: widget.patientId,
+      sensation: sensationData['sensation'],
+      footAreas: sensationData['areas'],
+      electrodeID: currentElectrode.toString(),
+      ramp: ramp,
+    );
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Data saved successfully'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ));
+
+      // Show success message if needed
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to save sensation data'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
+      ));
+    }
+  }
+
   void newElectrode() {
     stopStimulation();
     setState(() {
@@ -157,6 +193,7 @@ class _MappingScreenState extends State<MappingScreen>
   void recordMeanSensation() {
     setState(() {
       meanSensationRecorded = true;
+      meanSensationValue = currentAmplitude;
     });
   }
 
@@ -541,9 +578,6 @@ class _MappingScreenState extends State<MappingScreen>
 
                                                           if (result != null) {
                                                             // Extract data from result
-                                                            Map<String, dynamic>
-                                                                sensationData;
-
                                                             if (result is Map<
                                                                 String,
                                                                 dynamic>) {
@@ -559,60 +593,21 @@ class _MappingScreenState extends State<MappingScreen>
                                                             }
 
                                                             // Save the data to Firebase
-                                                            bool success =
-                                                                await _databaseService
-                                                                    .savePatientSensation(
-                                                              patientID: widget
-                                                                  .patientId,
-                                                              sensation:
-                                                                  sensationData[
-                                                                      'sensation'],
-                                                              footAreas:
-                                                                  sensationData[
-                                                                      'areas'],
-                                                              electrodeID:
-                                                                  currentElectrode
-                                                                      .toString(),
-                                                              amplitude:
-                                                                  currentAmplitude
-                                                                      .toDouble(),
-                                                            );
 
-                                                            if (success) {
-                                                              recordMeanSensation();
-                                                              // Show success message if needed
-                                                              ScaffoldMessenger
-                                                                      .of(
-                                                                          context)
-                                                                  .showSnackBar(
-                                                                      SnackBar(
-                                                                content: Text(
-                                                                    'Data saved successfully'),
-                                                                backgroundColor:
-                                                                    Colors
-                                                                        .green,
-                                                                duration:
-                                                                    Duration(
-                                                                        seconds:
-                                                                            2),
-                                                              ));
-                                                            } else {
-                                                              // Show error message
-                                                              ScaffoldMessenger
-                                                                      .of(
-                                                                          context)
-                                                                  .showSnackBar(
-                                                                      SnackBar(
-                                                                content: Text(
-                                                                    'Failed to save sensation data'),
-                                                                backgroundColor:
-                                                                    Colors.red,
-                                                                duration:
-                                                                    Duration(
-                                                                        seconds:
-                                                                            2),
-                                                              ));
-                                                            }
+                                                            recordMeanSensation();
+                                                            ScaffoldMessenger
+                                                                    .of(context)
+                                                                .showSnackBar(
+                                                                    SnackBar(
+                                                              content: Text(
+                                                                  'Data saved successfully'),
+                                                              backgroundColor:
+                                                                  Colors.green,
+                                                              duration:
+                                                                  Duration(
+                                                                      seconds:
+                                                                          2),
+                                                            ));
                                                           } else {
                                                             print(
                                                                 "User skipped adding sensations.");
@@ -621,6 +616,7 @@ class _MappingScreenState extends State<MappingScreen>
                                                       : () async {
                                                           setPaused();
                                                           recordMaxSensation();
+                                                          recordResults();
                                                           incrementRamp();
                                                           navigateElectrode(1);
                                                         }
