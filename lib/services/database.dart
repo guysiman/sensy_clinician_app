@@ -85,7 +85,7 @@ class DatabaseService {
           'footAreas': footAreas,
           'timestamp': FieldValue.serverTimestamp(),
         }
-      });
+      }, SetOptions(merge: true));
 
       // Also update the main patient document with some basic info
       await FirebaseFirestore.instance

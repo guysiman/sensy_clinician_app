@@ -62,6 +62,18 @@ class _MappingScreenState extends State<MappingScreen>
   double meanSensationValue = 0.0;
   double maxSensationValue = 0.0;
 
+  List<FlSpot> spots = [];
+  double? minX = 0;
+  double? maxX = 24;
+  double? minY = 0;
+  double? maxY = 700;
+  double? vInterval = 5;
+  double? hInterval = 100;
+
+  double rampStart = 0;
+  double rampEnd = 0.0;
+  double rampDuration = 1.0;
+
   Map<String, dynamic> sensationData = {
     'sensation': 'None',
     'areas': [],
@@ -69,7 +81,7 @@ class _MappingScreenState extends State<MappingScreen>
 
   void startRampUp() {
     setState(() {
-      chartData = [FlSpot(0, 0)];
+      if (ramp == 1) chartData = [FlSpot(0, 0)];
     });
 
     timer = Timer.periodic(interval, (timer) {
@@ -100,18 +112,6 @@ class _MappingScreenState extends State<MappingScreen>
           }
         });
       } else {
-        double rampStart = max(0.75 * storedMinSensationValue, 0);
-        double rampEnd = min(1.25 * storedMaxSensationValue, 600);
-        double rampDuration = 1.0;
-        if (rampEnd - rampStart < 100) {
-          rampDuration = 5.25;
-        } else if (rampEnd - rampStart < 200) {
-          rampDuration = 11.25;
-        } else if (rampEnd - rampStart < 400) {
-          rampDuration = 15.75;
-        } else {
-          rampDuration = 22.5;
-        }
         setState(() {
           double increment = (rampEnd - rampStart) / rampDuration * 0.1;
           currentAmplitude =
@@ -137,23 +137,30 @@ class _MappingScreenState extends State<MappingScreen>
 
   List<FlSpot> getSpots(double amplitude) {
     List<FlSpot> result = [];
-    result.add(FlSpot(0, 0));
-    if (amplitude > 50) {
-      result.add(FlSpot(3.75, 50));
+    if (ramp == 1) {
+      result.add(FlSpot(0, 0));
+      if (amplitude > 50) {
+        result.add(FlSpot(3.75, 50));
+      }
+      if (amplitude > 100) {
+        result.add(FlSpot(5.25, 100));
+      }
+      if (amplitude > 150) {
+        result.add(FlSpot(6.75, 150));
+      }
+      if (amplitude > 250) {
+        result.add(FlSpot(11.25, 250));
+      }
+      if (amplitude > 400) {
+        result.add(FlSpot(15, 400));
+      }
+      result.add(FlSpot(getTime(amplitude), amplitude));
+    } else {
+      result.add(FlSpot(0, rampStart));
+      result.add(FlSpot(
+          (amplitude - rampStart) / (rampEnd - rampStart) * rampDuration,
+          amplitude));
     }
-    if (amplitude > 100) {
-      result.add(FlSpot(5.25, 100));
-    }
-    if (amplitude > 150) {
-      result.add(FlSpot(6.75, 150));
-    }
-    if (amplitude > 250) {
-      result.add(FlSpot(11.25, 250));
-    }
-    if (amplitude > 400) {
-      result.add(FlSpot(15, 400));
-    }
-    result.add(FlSpot(getTime(amplitude), amplitude));
     return result;
   }
 
@@ -201,12 +208,17 @@ class _MappingScreenState extends State<MappingScreen>
   }
 
   void newElectrode() {
-    stopStimulation();
     setState(() {
       minSensationRecorded = false;
       meanSensationRecorded = false;
+      storedMinSensationValue = 0;
+      storedMeanSensationValue = 0;
+      storedMaxSensationValue = 0;
+      rampStart = 0;
       ramp = 1;
+      setupGraph();
     });
+    stopStimulation();
   }
 
   double getTime(double amplitude) {
@@ -231,8 +243,8 @@ class _MappingScreenState extends State<MappingScreen>
     timer?.cancel();
     setState(() {
       setNotStarted();
-      currentAmplitude = 0;
-      storedCurrentAmplitude = 0;
+      currentAmplitude = rampStart;
+      storedCurrentAmplitude = rampStart;
       step = 0;
       ramping = false;
     });
@@ -261,6 +273,7 @@ class _MappingScreenState extends State<MappingScreen>
   @override
   void initState() {
     super.initState();
+    setupGraph();
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -299,6 +312,46 @@ class _MappingScreenState extends State<MappingScreen>
   void exitCustom() {
     loadCurrentAmplitude();
     toggleStimulation();
+  }
+
+  void setupGraph() {
+    if (ramp == 1) {
+      spots = [
+        FlSpot(0, 0),
+        FlSpot(3.75, 50),
+        FlSpot(5.25, 100),
+        FlSpot(6.75, 150),
+        FlSpot(11.25, 250),
+        FlSpot(15, 400),
+        FlSpot(22.5, 600)
+      ];
+      minX = 0;
+      maxX = 24;
+      minY = 0;
+      maxY = 700;
+      vInterval = 5;
+      hInterval = 100;
+    } else {
+      rampStart = max(0.75 * storedMinSensationValue, 0);
+      rampEnd = min(1.25 * storedMaxSensationValue, 600);
+      rampDuration = 1.0;
+      if (rampEnd - rampStart < 100) {
+        rampDuration = 5.25;
+      } else if (rampEnd - rampStart < 200) {
+        rampDuration = 11.25;
+      } else if (rampEnd - rampStart < 400) {
+        rampDuration = 15.75;
+      } else {
+        rampDuration = 22.5;
+      }
+      minX = 0;
+      maxX = rampDuration * 1.1;
+      minY = rampStart;
+      maxY = rampEnd * 1.15;
+      vInterval = (maxX! / 5).roundToDouble();
+      hInterval = 100;
+      spots = [FlSpot(0, rampStart), FlSpot(rampDuration, rampEnd)];
+    }
   }
 
   void setRunning() {
@@ -357,12 +410,15 @@ class _MappingScreenState extends State<MappingScreen>
       if (ramp == 1) {
         ramp = 2;
         resetCurrentAmplitude();
+        setupGraph();
       } else if (ramp == 2 &&
               (storedMinSensationValue - minSensationValue).abs() >=
                   minSensationValue * 0.15 ||
           (storedMaxSensationValue - maxSensationValue).abs() >=
               maxSensationValue * 0.15) {
         ramp = 3;
+        resetCurrentAmplitude();
+        setupGraph();
       } else {
         navigateElectrode(1);
       }
@@ -384,6 +440,7 @@ class _MappingScreenState extends State<MappingScreen>
     setState(() {
       ramp = 1;
       newElectrode();
+      setupGraph();
     });
   }
 
@@ -862,14 +919,14 @@ class _MappingScreenState extends State<MappingScreen>
                                               show: true,
                                               drawHorizontalLine: true,
                                               drawVerticalLine: true,
-                                              horizontalInterval: 100,
-                                              verticalInterval: 5,
+                                              horizontalInterval: hInterval,
+                                              verticalInterval: vInterval,
                                             ),
                                             titlesData: FlTitlesData(
                                               leftTitles: AxisTitles(
                                                 sideTitles: SideTitles(
                                                   showTitles: true,
-                                                  interval: 100,
+                                                  interval: hInterval,
                                                   getTitlesWidget:
                                                       (value, meta) {
                                                     return Text(
@@ -891,7 +948,7 @@ class _MappingScreenState extends State<MappingScreen>
                                               bottomTitles: AxisTitles(
                                                 sideTitles: SideTitles(
                                                   showTitles: true,
-                                                  interval: 5,
+                                                  interval: vInterval,
                                                   getTitlesWidget:
                                                       (value, meta) {
                                                     return Text(
@@ -953,15 +1010,17 @@ class _MappingScreenState extends State<MappingScreen>
 
                                               // Full line, lightly shaded
                                               LineChartBarData(
-                                                spots: [
-                                                  FlSpot(0, 0),
-                                                  FlSpot(3.75, 50),
-                                                  FlSpot(5.25, 100),
-                                                  FlSpot(6.75, 150),
-                                                  FlSpot(11.25, 250),
-                                                  FlSpot(15, 400),
-                                                  FlSpot(22.5, 600)
-                                                ],
+                                                spots: spots
+                                                // [
+                                                //   FlSpot(0, 0),
+                                                //   FlSpot(3.75, 50),
+                                                //   FlSpot(5.25, 100),
+                                                //   FlSpot(6.75, 150),
+                                                //   FlSpot(11.25, 250),
+                                                //   FlSpot(15, 400),
+                                                //   FlSpot(22.5, 600)
+                                                // ]
+                                                ,
                                                 isCurved: true,
                                                 color: Color(0xFF3D6673),
                                                 barWidth: 2,
@@ -984,10 +1043,10 @@ class _MappingScreenState extends State<MappingScreen>
                                                 ),
                                               ),
                                             ],
-                                            minX: 0,
-                                            maxX: 24,
-                                            minY: 0,
-                                            maxY: 700,
+                                            minX: minX,
+                                            maxX: maxX,
+                                            minY: minY,
+                                            maxY: maxY,
                                           ),
                                         ),
                                       ),
