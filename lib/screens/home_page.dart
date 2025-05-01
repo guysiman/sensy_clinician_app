@@ -7,7 +7,6 @@ import '../services/auth.dart';
 import 'bluetooth_page.dart';
 import 'dashboard_page.dart';
 import 'patient_page.dart';
-import 'device_pairing_page.dart';
 
 final GlobalKey<_HomePageState> homePageKey = GlobalKey<_HomePageState>();
 
@@ -32,12 +31,19 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     DashboardPage(),
     PatientsScreen(),
-    DevicePairingPage(),
+    BluetoothPage(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void navigateToPatient() {
+    print('i am here');
+    setState(() {
+      _selectedIndex = 1; // Set to IPG page
     });
   }
 

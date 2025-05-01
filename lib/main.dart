@@ -6,8 +6,6 @@ import 'package:provider/provider.dart';
 import 'providers/bluetooth_provider.dart';
 import 'widget_tree.dart';
 
-import 'screens/bluetooth_off_page.dart';
-import 'screens/device_pairing_page.dart';
 import 'screens/bluetooth_page.dart';
 
 import 'screens/home_page.dart';
@@ -110,9 +108,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/signinpage': (context) => SignInPage(),
           '/homepage': (context) => HomePage(key: homePageKey),
-          '/devicepairingpage': (context) => DevicePairingPage(),
           '/bluetoothpage': (context) => BluetoothPage(),
-          '/bluetoothoffpage': (context) => BluetoothOffPage(),
         });
   }
 }

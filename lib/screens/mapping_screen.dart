@@ -1,3 +1,16 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:provider/provider.dart';
+import 'dart:async';
+
+import '../components/add_sensation_dialog.dart';
+import '../providers/bluetooth_provider.dart';
+import '../services/database.dart';
+import './mapped_view.dart'; // Import our new mapped view
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -43,7 +56,7 @@ class _MappingScreenState extends State<MappingScreen>
   final double finalAmplitude = 600.0;
   final List<double> increments = [1.33, 3.33, 3.33, 2.22, 4, 2.67];
   final List<double> ampMarks = [50, 100, 150, 250, 400, 600];
-  final Duration interval = Duration(milliseconds: 100);
+  final Duration interval = Duration(milliseconds: 250);
 
   Timer? timer;
   List<FlSpot> chartData = [FlSpot(0, 0)];
@@ -74,6 +87,8 @@ class _MappingScreenState extends State<MappingScreen>
   double rampEnd = 0.0;
   double rampDuration = 1.0;
 
+  BluetoothDevice? device;
+
   Map<String, dynamic> sensationData = {
     'sensation': 'None',
     'areas': [],
@@ -89,6 +104,7 @@ class _MappingScreenState extends State<MappingScreen>
         timer.cancel();
         return;
       }
+      _writeLiveData();
       if (ramp == 1) {
         setState(() {
           double increment = 0.0;
@@ -276,6 +292,75 @@ class _MappingScreenState extends State<MappingScreen>
     super.initState();
     setupGraph();
     _tabController = TabController(length: 2, vsync: this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bluetoothProvider =
+      Provider.of<BluetoothProvider>(context, listen: false);
+      device = bluetoothProvider.IPG;
+    });
+  }
+
+  Future<void> _writeLiveData() async {
+    try {
+      print("🚀 Attempting to write data to ${device!.advName}");
+      List<BluetoothService>? services = await device?.discoverServices();
+      print("🔍 Discovered ${services!.length} services.");
+
+      for (BluetoothService service in services) {
+        print("🔍 Service: ${service.uuid}");
+        for (BluetoothCharacteristic characteristic in service.characteristics) {
+          print("🔎 Characteristic: ${characteristic.uuid} - Properties: ${characteristic.properties}");
+
+          // Only write to writable characteristics (excluding certain UUIDs if needed)
+          if (characteristic.properties.write &&
+              characteristic.uuid != Guid('2b29')) {
+            Map<String, dynamic> payload = {
+              'e': currentElectrode,
+              'a': currentAmplitude,
+            };
+
+            List<int> bytes = utf8.encode(json.encode(payload));
+            print("✍ Writing data: $payload (Bytes: ${bytes.length})");
+
+            DateTime sendTime = DateTime.now();
+            await characteristic.write(bytes, withoutResponse: true);
+            print("📤 Data Sent at $sendTime");
+
+            // Optionally listen for notification response from any notify-capable characteristic
+            for (BluetoothCharacteristic c in service.characteristics) {
+              if (c.properties.notify || c.properties.indicate) {
+                await c.setNotifyValue(true);
+                c.lastValueStream.listen((value) {
+                  String receivedData = String.fromCharCodes(value);
+                  print("📡 Received Data: $receivedData");
+                });
+                print("✅ Listening for response on ${c.uuid}");
+                return;
+              }
+            }
+
+            print("⚠️ No notification characteristic found.");
+            return;
+          }
+        }
+      }
+      print("⚠️ No writable characteristic found.");
+    } catch (e) {
+      print("❌ Error writing data: $e");
+    }
+  }
+
+  dynamic roundIfExceedsFourDecimals(dynamic value) {
+    if (value == null) return 0.0; // Handle null case
+
+    if (value is num) {
+      final strValue = value.toString();
+      // Check if the number has more than 4 decimal places
+      if (strValue.contains('.') && strValue.split('.')[1].length > 4) {
+        return double.parse(value.toStringAsFixed(4));
+      }
+    }
+    return value; // Return original if <=4 decimals or not a number
   }
 
   @override

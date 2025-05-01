@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
-import 'dart:io';
 
 import '../providers/bluetooth_provider.dart';
-import 'mapping_screen.dart';
+import 'home_page.dart';
 
 class BluetoothPage extends StatefulWidget {
   const BluetoothPage({super.key});
@@ -31,8 +30,24 @@ class _BluetoothPageState extends State<BluetoothPage> {
     super.dispose();
   }
 
-
   Future<void> _startScanning() async {
+    // Check if Bluetooth is supported
+    if (!await FlutterBluePlus.isSupported) {
+      print("Bluetooth not supported on this device");
+      return;
+    }
+
+    // Check if Bluetooth is on
+    final adapterState = await FlutterBluePlus.adapterState.first;
+    if (adapterState != BluetoothAdapterState.on) {
+      // Prompt user to enable Bluetooth
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please enable Bluetooth to proceed.")),
+      );
+      return;
+    }
+
+    // Proceed with scanning
     setState(() {
       devices.clear();
     });
@@ -88,7 +103,8 @@ class _BluetoothPageState extends State<BluetoothPage> {
           break;
       }
 
-      Navigator.pushNamed(context, '/devicepairingpage');
+      homePageKey.currentState?.navigateToIPG();
+
       _discoverServices(device);
       // 📡 Start reading live data
       _readLiveData(device);
@@ -111,10 +127,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
 
   @override
   Widget build(BuildContext context) {
-
-
-    String deviceType =
-        ModalRoute.of(context)?.settings.arguments as String? ?? "default";
+    String deviceType = "IPG";
 
     return Scaffold(
       appBar: AppBar(
