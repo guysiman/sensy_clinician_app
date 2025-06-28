@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth.dart';
+import 'signup_screen.dart';
+import 'forgot_password_screen.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -12,9 +14,15 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
   bool _isButtonEnabled = false;
+  bool _emailShowError = false;
+  bool _passwordShowError = false;
 
   String? errorMessage = '';
+  String? _emailError;
+  String? _passwordError;
 
   Future<void> signInWithEmailAndPassword() async {
     try {
@@ -37,6 +45,22 @@ class _SignInPageState extends State<SignInPage> {
             errorMessage = "An unexpected error occurred";
         }
       });
+      if (errorMessage != null && errorMessage!.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: SizedBox(
+              width: double.infinity,
+              child: Text(
+                errorMessage!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            backgroundColor: const Color(0xFFF8F8F8), // off white
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -45,12 +69,32 @@ class _SignInPageState extends State<SignInPage> {
     super.initState();
     _usernameController.addListener(_checkFields);
     _passwordController.addListener(_checkFields);
+    _emailFocus.addListener(() {
+      if (!_emailFocus.hasFocus) setState(() => _emailShowError = true);
+    });
+    _passwordFocus.addListener(() {
+      if (!_passwordFocus.hasFocus) setState(() => _passwordShowError = true);
+    });
   }
 
   void _checkFields() {
     setState(() {
-      _isButtonEnabled = _usernameController.text.isNotEmpty &&
-          _passwordController.text.isNotEmpty;
+      // Email validation
+      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_usernameController.text)) {
+        _emailError = 'Enter a valid email';
+      } else {
+        _emailError = null;
+      }
+      // Password validation
+      if (_passwordController.text.length < 7) {
+        _passwordError = 'Password must be at least 7 characters';
+      } else if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$').hasMatch(_passwordController.text)) {
+        _passwordError = 'Password must contain letters and numbers';
+      } else {
+        _passwordError = null;
+      }
+      _isButtonEnabled = _emailError == null && _passwordError == null &&
+        _usernameController.text.isNotEmpty && _passwordController.text.isNotEmpty;
     });
   }
 
@@ -58,6 +102,8 @@ class _SignInPageState extends State<SignInPage> {
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -78,11 +124,17 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   void _onForgotPassword() {
-    debugPrint('Forgot password tapped');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+    );
   }
 
   void _onSignUp() {
-    debugPrint('Sign up tapped');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SignUpScreen()),
+    );
   }
 
   @override
@@ -110,6 +162,7 @@ class _SignInPageState extends State<SignInPage> {
                   const SizedBox(height: 4),
                   TextField(
                     controller: _usernameController,
+                    focusNode: _emailFocus,
                     decoration: InputDecoration(
                       labelText: 'Enter your username',
                       labelStyle:
@@ -126,7 +179,12 @@ class _SignInPageState extends State<SignInPage> {
                                 0xFFE8EDEC)), // Border color when not focused
                       ),
                       floatingLabelBehavior: FloatingLabelBehavior.never,
+                      errorText: _emailShowError ? _emailError : null,
                     ),
+                    onChanged: (_) {
+                      if (_emailShowError) setState(() => _emailShowError = false);
+                      _checkFields();
+                    },
                   ),
 
                   const SizedBox(height: 16),
@@ -139,6 +197,7 @@ class _SignInPageState extends State<SignInPage> {
                   const SizedBox(height: 4),
                   TextField(
                     controller: _passwordController,
+                    focusNode: _passwordFocus,
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'Enter your password',
@@ -156,7 +215,12 @@ class _SignInPageState extends State<SignInPage> {
                                 0xFFE8EDEC)), // Border color when not focused
                       ),
                       floatingLabelBehavior: FloatingLabelBehavior.never,
+                      errorText: _passwordShowError ? _passwordError : null,
                     ),
+                    onChanged: (_) {
+                      if (_passwordShowError) setState(() => _passwordShowError = false);
+                      _checkFields();
+                    },
                   ),
 
                   const SizedBox(height: 8),
@@ -171,8 +235,6 @@ class _SignInPageState extends State<SignInPage> {
                   ),
 
                   const SizedBox(height: 40),
-
-                  if (errorMessage != '') Text('$errorMessage'),
 
                   const SizedBox(height: 40),
 
@@ -193,7 +255,7 @@ class _SignInPageState extends State<SignInPage> {
                               _onSignIn();
                             }
                           : null,
-                      child: const Text('Enter account'),
+                      child: const Text('Login'),
                     ),
                   ),
 
