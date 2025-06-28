@@ -17,13 +17,36 @@ class _PatientScreenState extends State<PatientsScreen> {
   final DatabaseService dbService = DatabaseService();
   String? clinicianID;
   List<Map<String, dynamic>> patients = [];
+  List<Map<String, dynamic>> filteredPatients = [];
   bool isLoading = true;
   bool hasError = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     fetchClinicianAndPatients();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    String query = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        filteredPatients = List.from(patients);
+      } else {
+        filteredPatients = patients.where((patient) {
+          final id = (patient['patientID'] ?? '').toString().toLowerCase();
+          return id.contains(query);
+        }).toList();
+      }
+    });
   }
 
   Future<void> fetchClinicianAndPatients() async {
@@ -38,6 +61,7 @@ class _PatientScreenState extends State<PatientsScreen> {
       setState(() {
         clinicianID = fetchedClinicianID;
         patients = fetchedPatients;
+        filteredPatients = List.from(fetchedPatients);
         isLoading = false;
       });
     } catch (e) {
@@ -68,6 +92,7 @@ class _PatientScreenState extends State<PatientsScreen> {
             width: 200, // Smaller search bar
             padding: EdgeInsets.only(right: 16),
             child: TextField(
+              controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search',
                 hintStyle: TextStyle(color: Colors.grey), // Grey hint text
@@ -133,10 +158,10 @@ class _PatientScreenState extends State<PatientsScreen> {
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
-                    itemCount: patients.length,
+                    itemCount: filteredPatients.length,
                     itemBuilder: (context, index) {
-                      final patient = patients[index];
-                      
+                      final patient = filteredPatients[index];
+
                       // For testing - set some patients as having IPGs
                       // In a real app, this would come from the database
                       bool hasIPG = index % 3 == 0; // Every third patient has an IPG
